@@ -232,6 +232,10 @@ export const NavBar = () => {
                       <Heart size={16} />
                       <span>Wishlist</span>
                     </Link>
+                    <Link href="/affiliate/dashboard" className="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-50 text-[#FF7A19] text-sm">
+                      <Package size={16} />
+                      <span>Affiliate Dashboard</span>
+                    </Link>
                     {user?.role === 'admin' && (
                       <Link href="/admin" className="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-50 text-[#FF7A19] text-sm">
                         <Settings size={16} />
