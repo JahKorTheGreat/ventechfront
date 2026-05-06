@@ -36,8 +36,8 @@ export const paymentService = {
     try {
       // Get API URL from environment or use default
       const API_URL = typeof window !== 'undefined' 
-        ? (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000')
-        : 'http://localhost:5000';
+        ? (process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:5000')
+        : (process.env.API_URL || 'http://127.0.0.1:5000');
       
       if (!API_URL) {
         throw new Error('API URL is not configured. Please set NEXT_PUBLIC_API_URL in your environment variables.');
@@ -207,14 +207,8 @@ export const paymentService = {
     try {
       // Get API URL from environment or use default
       const API_URL = typeof window !== 'undefined' 
-        ? (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000')
-        : 'http://localhost:5000';
-      
-      if (!API_URL) {
-        throw new Error('API URL is not configured. Please set NEXT_PUBLIC_API_URL in your environment variables.');
-      }
-      
-      const response = await fetch(`${API_URL}/api/payments/verify`, {
+        ? (process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:5000')
+        : (process.env.API_URL || 'http://127.0.0.1:5000'); {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

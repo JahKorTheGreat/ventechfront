@@ -1,7 +1,7 @@
 // Affiliate Stats Service
 // Handles dashboard statistics, chart data, and earnings summaries
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+const API_URL = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:5000';
 
 export interface DashboardStats {
   totalEarnings: number;
@@ -40,7 +40,7 @@ export const affiliateStatsService = {
    */
   async getDashboardStats(): Promise<DashboardStats> {
     try {
-      const response = await fetch(`${API_URL}/api/affiliate/dashboard/stats`, {
+      const response = await fetch(`${API_URL}/api/affiliate/dashboard`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',

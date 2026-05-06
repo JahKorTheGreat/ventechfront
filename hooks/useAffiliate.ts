@@ -27,10 +27,11 @@ import { PaymentMethodInput, PayoutSummary } from '@/services/affiliatePayouts.s
  */
 export const useDashboardStats = () => {
   const dispatch = useAppDispatch();
-  const { stats, loading: statsLoading, chartData, loading: chartLoading, error, selectedTimeframe } = useAppSelector(
+  const { stats, chartData, error, selectedTimeframe, loading } = useAppSelector(
     (state) => state.affiliate
   );
   const { isAuthenticated } = useAppSelector((state) => state.auth);
+  const isLoading = loading.stats || loading.chartData;
 
   // Fetch stats and chart data on mount and when authenticated
   useEffect(() => {
@@ -51,7 +52,7 @@ export const useDashboardStats = () => {
   return {
     stats,
     chartData,
-    loading: statsLoading || chartLoading,
+    loading: isLoading,
     error,
     selectedTimeframe,
     changeTimeframe,

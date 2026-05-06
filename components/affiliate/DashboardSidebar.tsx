@@ -4,6 +4,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { BarChart3, Link2, DollarSign, CreditCard, Package, LogOut } from 'lucide-react';
 import { useAppDispatch } from '@/store';
@@ -27,29 +28,36 @@ export default function DashboardSidebar() {
   };
 
   return (
-    <aside className="w-64 bg-vt-bg-primary border-r border-vt-border overflow-y-auto">
-      <div className="h-16 flex items-center px-6 border-b border-vt-border">
-        <Link href="/affiliate" className="text-xl font-bold text-vt-primary">
-          VENTECH <span className="text-xs text-vt-text-secondary">Affiliate</span>
+    <aside className="hidden lg:flex lg:w-64 bg-gray-50 shadow-lg flex-col overflow-y-auto">
+      <div className="h-16 flex items-center justify-center px-4 lg:px-6 shadow-md border-b border-gray-200">
+        <Link href="/affiliate/dashboard" className="hover:opacity-80 transition-opacity">
+          <Image
+            src="/logo/ventech_logo-black.png"
+            alt="VENTECH"
+            width={40}
+            height={40}
+            className="h-10 w-auto"
+          />
         </Link>
       </div>
 
-      <nav className="p-6 space-y-2">
+      <nav className="flex-1 p-4 lg:p-6 space-y-2">
         {navItems.map((item) => {
           const Icon = item.icon;
-          const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
+          // Exact match only - each tab at same level
+          const isActive = pathname === item.href;
 
           return (
             <Link
               key={item.href}
               href={item.href}
-              className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
+              className={`flex items-center space-x-3 px-3 lg:px-4 py-2 lg:py-3 rounded-lg transition-all duration-200 border-l-4 text-sm lg:text-base ${
                 isActive
-                  ? 'bg-vt-primary text-white'
-                  : 'text-vt-text-secondary hover:bg-vt-bg-secondary hover:text-vt-text-primary'
+                  ? 'bg-orange-50 text-orange-700 border-l-orange-500 font-semibold'
+                  : 'text-vt-text-secondary border-l-transparent hover:bg-gray-100 hover:text-vt-text-primary'
               }`}
             >
-              <Icon className="w-5 h-5" />
+              <Icon className="w-5 h-5 flex-shrink-0" />
               <span className="font-medium">{item.label}</span>
             </Link>
           );
@@ -57,12 +65,12 @@ export default function DashboardSidebar() {
       </nav>
 
       {/* Logout Button */}
-      <div className="absolute bottom-6 left-6 right-6">
+      <div className="p-4 lg:p-6 border-t border-gray-200 mt-auto">
         <button
           onClick={handleLogout}
-          className="w-full flex items-center space-x-3 px-4 py-3 text-vt-text-secondary hover:bg-vt-bg-secondary hover:text-vt-text-primary rounded-lg transition-colors"
+          className="w-full flex items-center space-x-3 px-3 lg:px-4 py-2 lg:py-3 text-vt-text-secondary hover:bg-vt-bg-secondary hover:text-vt-text-primary rounded-lg transition-colors text-sm lg:text-base"
         >
-          <LogOut className="w-5 h-5" />
+          <LogOut className="w-5 h-5 flex-shrink-0" />
           <span className="font-medium">Logout</span>
         </button>
       </div>

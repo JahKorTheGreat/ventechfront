@@ -123,7 +123,7 @@ export const notificationService = {
   // Send low stock email to admin
   async sendLowStockEmail(productName: string, stockQuantity: number): Promise<void> {
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+      const apiUrl = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:5000';
       const response = await fetch(`${apiUrl}/api/admin/send-email`, {
         method: 'POST',
         headers: {
@@ -168,7 +168,7 @@ export const notificationService = {
   // Send out of stock email to admin
   async sendOutOfStockEmail(productName: string): Promise<void> {
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+      const apiUrl = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:5000';
       const response = await fetch(`${apiUrl}/api/admin/send-email`, {
         method: 'POST',
         headers: {

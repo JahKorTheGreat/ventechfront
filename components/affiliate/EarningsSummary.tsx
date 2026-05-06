@@ -44,7 +44,7 @@ export default function EarningsSummary({ summary, loading }: EarningsSummaryPro
       {cards.map((card, idx) => {
         const Icon = card.icon;
         return (
-          <div key={idx} className="bg-vt-bg-primary rounded-lg border border-vt-border p-6">
+          <div key={idx} className="bg-gray-50 rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-vt-text-secondary text-sm font-medium">{card.label}</p>

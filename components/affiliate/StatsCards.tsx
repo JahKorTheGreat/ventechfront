@@ -58,20 +58,24 @@ export default function StatsCards({ stats, loading }: StatsCardsProps) {
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
       {cards.map((card, idx) => {
         const Icon = card.icon;
         return (
-          <div key={idx} className="bg-vt-bg-primary rounded-lg border border-vt-border p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-vt-text-secondary text-sm font-medium">{card.label}</p>
-                <p className="text-2xl font-bold text-vt-text-primary mt-2">
-                  {loading ? <span className="text-vt-text-secondary">...</span> : formatValue(card.value, card.format)}
+          <div key={idx} className="bg-gray-50 rounded-lg shadow-md p-4 sm:p-6 hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex-1 min-w-0">
+                <p className="text-vt-text-secondary text-xs sm:text-sm font-medium">{card.label}</p>
+                <p className="text-lg sm:text-2xl font-bold text-vt-text-primary mt-2 truncate min-h-7">
+                  {loading ? (
+                    <span className="inline-block w-16 h-6 bg-gray-200 rounded animate-pulse"></span>
+                  ) : (
+                    formatValue(card.value, card.format)
+                  )}
                 </p>
               </div>
-              <div className={`w-12 h-12 rounded-lg ${card.bgColor} flex items-center justify-center`}>
-                <Icon className={`w-6 h-6 ${card.color}`} />
+              <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-lg ${card.bgColor} flex items-center justify-center flex-shrink-0`}>
+                <Icon className={`w-5 h-5 sm:w-6 sm:h-6 ${card.color}`} />
               </div>
             </div>
           </div>

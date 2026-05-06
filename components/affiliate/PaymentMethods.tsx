@@ -24,8 +24,8 @@ export default function PaymentMethods({
   onSetDefault,
 }: PaymentMethodsProps) {
   const [isAddingMethod, setIsAddingMethod] = useState(false);
-  const [formData, setFormData] = useState({
-    type: 'bank_transfer' as const,
+  const [formData, setFormData] = useState<PaymentMethodInput>({
+    type: 'bank_transfer',
     name: '',
     details: '',
   });
@@ -80,8 +80,8 @@ export default function PaymentMethods({
   };
 
   return (
-    <div className="bg-vt-bg-primary rounded-lg border border-vt-border">
-      <div className="p-6 border-b border-vt-border">
+    <div className="bg-gray-50 rounded-lg shadow-md">
+      <div className="p-6 shadow-sm">
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-lg font-bold text-vt-text-primary">Payment Methods</h3>
@@ -99,14 +99,14 @@ export default function PaymentMethods({
 
       {/* Add Method Form */}
       {isAddingMethod && (
-        <form onSubmit={handleSubmit} className="p-6 border-b border-vt-border bg-vt-bg-secondary">
+        <form onSubmit={handleSubmit} className="p-6 bg-vt-bg-secondary border-t border-vt-border-subtle">
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-vt-text-primary mb-2">Payment Type</label>
               <select
                 value={formData.type}
                 onChange={(e) => setFormData({ ...formData, type: e.target.value as any })}
-                className="w-full px-4 py-2 border border-vt-border rounded-lg bg-vt-bg-primary text-vt-text-primary outline-none"
+                className="w-full px-4 py-2 border border-vt-border-subtle rounded-lg bg-gray-50 text-vt-text-primary outline-none focus:border-vt-primary transition-colors"
               >
                 <option value="bank_transfer">Bank Transfer</option>
                 <option value="mobile_money">Mobile Money (MoMo)</option>
@@ -121,7 +121,7 @@ export default function PaymentMethods({
                 placeholder="e.g., My Bank Account"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="w-full px-4 py-2 border border-vt-border rounded-lg bg-vt-bg-primary text-vt-text-primary outline-none"
+                className="w-full px-4 py-2 border border-vt-border-subtle rounded-lg bg-gray-50 text-vt-text-primary outline-none focus:border-vt-primary transition-colors"
               />
             </div>
 
@@ -136,7 +136,7 @@ export default function PaymentMethods({
                 placeholder="Enter details"
                 value={formData.details}
                 onChange={(e) => setFormData({ ...formData, details: e.target.value })}
-                className="w-full px-4 py-2 border border-vt-border rounded-lg bg-vt-bg-primary text-vt-text-primary outline-none"
+                className="w-full px-4 py-2 border border-vt-border-subtle rounded-lg bg-gray-50 text-vt-text-primary outline-none focus:border-vt-primary transition-colors"
               />
             </div>
 
@@ -144,7 +144,7 @@ export default function PaymentMethods({
               <button
                 type="button"
                 onClick={() => setIsAddingMethod(false)}
-                className="flex-1 px-4 py-2 border border-vt-border rounded-lg text-vt-text-primary hover:bg-vt-border transition-colors"
+                className="flex-1 px-4 py-2 border border-vt-border-subtle rounded-lg text-vt-text-primary hover:bg-vt-bg-secondary transition-colors"
               >
                 Cancel
               </button>

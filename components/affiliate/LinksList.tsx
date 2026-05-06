@@ -3,18 +3,24 @@
 
 'use client';
 
+import { useState } from 'react';
 import { ReferralLink } from '@/services/affiliateLinks.service';
-import { Copy, Trash2, Eye, BarChart3 } from 'lucide-react';
+import { Copy, Trash2, Eye, BarChart3, Edit2 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import LinkAnalyticsModal from './LinkAnalyticsModal';
+import LinkEditDialog from './LinkEditDialog';
 
 interface LinksListProps {
   links: ReferralLink[];
   loading: boolean;
   onDelete: (linkId: string) => Promise<void>;
+  onEdit: (linkId: string, name: string, source?: string) => Promise<void>;
   onCopy: (url: string) => boolean;
 }
 
-export default function LinksList({ links, loading, onDelete, onCopy }: LinksListProps) {
+export default function LinksList({ links, loading, onDelete, onEdit, onCopy }: LinksListProps) {
+  const [selectedLinkForAnalytics, setSelectedLinkForAnalytics] = useState<ReferralLink | null>(null);
+  const [selectedLinkForEdit, setSelectedLinkForEdit] = useState<ReferralLink | null>(null);
   const handleCopy = (url: string) => {
     const success = onCopy(url);
     if (success) {
@@ -36,80 +42,109 @@ export default function LinksList({ links, loading, onDelete, onCopy }: LinksLis
   };
 
   return (
-    <div className="bg-vt-bg-primary rounded-lg border border-vt-border">
-      {loading ? (
-        <div className="p-8 text-center text-vt-text-secondary">Loading links...</div>
-      ) : links.length === 0 ? (
-        <div className="p-8 text-center text-vt-text-secondary">
-          <p>No referral links yet</p>
-          <p className="text-sm mt-2">Create your first link to start tracking referrals</p>
-        </div>
-      ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="border-b border-vt-border bg-vt-bg-secondary">
-              <tr>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-vt-text-primary">Link Name</th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-vt-text-primary">Clicks</th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-vt-text-primary">Conversions</th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-vt-text-primary">Earnings</th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-vt-text-primary">Conv. Rate</th>
-                <th className="px-6 py-3 text-right text-sm font-semibold text-vt-text-primary">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {links.map((link) => (
-                <tr key={link.id} className="border-b border-vt-border hover:bg-vt-bg-secondary transition-colors">
-                  <td className="px-6 py-4">
-                    <div>
-                      <p className="font-medium text-vt-text-primary">{link.name}</p>
-                      <p className="text-xs text-vt-text-secondary mt-1 truncate">{link.url}</p>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <p className="font-semibold text-vt-text-primary flex items-center space-x-2">
-                      <span>{link.clicks}</span>
-                    </p>
-                  </td>
-                  <td className="px-6 py-4">
-                    <p className="font-semibold text-vt-text-primary">{link.conversions}</p>
-                  </td>
-                  <td className="px-6 py-4">
-                    <p className="font-semibold text-green-600">${link.earnings.toFixed(2)}</p>
-                  </td>
-                  <td className="px-6 py-4">
-                    <p className="text-vt-text-secondary">{(link.conversionRate * 100).toFixed(2)}%</p>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex justify-end space-x-2">
-                      <button
-                        onClick={() => handleCopy(link.url)}
-                        className="p-2 text-vt-text-secondary hover:text-vt-primary hover:bg-vt-bg-secondary rounded transition-colors"
-                        title="Copy link"
-                      >
-                        <Copy className="w-4 h-4" />
-                      </button>
-                      <button
-                        className="p-2 text-vt-text-secondary hover:text-vt-primary hover:bg-vt-bg-secondary rounded transition-colors"
-                        title="View analytics"
-                      >
-                        <BarChart3 className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(link.id)}
-                        className="p-2 text-vt-text-secondary hover:text-red-500 hover:bg-red-50 rounded transition-colors"
-                        title="Delete link"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </td>
+    <>
+      <div className="bg-gray-50 rounded-lg shadow-md">
+        {loading ? (
+          <div className="p-8 text-center text-vt-text-secondary">Loading links...</div>
+        ) : links.length === 0 ? (
+          <div className="p-8 text-center text-vt-text-secondary">
+            <p>No referral links yet</p>
+            <p className="text-sm mt-2">Create your first link to start tracking referrals</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="border-b border-vt-border-subtle bg-vt-bg-secondary">
+                <tr>
+                  <th className="px-6 py-3 text-left text-sm font-semibold text-vt-text-primary">Link Name</th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold text-vt-text-primary">Clicks</th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold text-vt-text-primary">Conversions</th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold text-vt-text-primary">Earnings</th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold text-vt-text-primary">Conv. Rate</th>
+                  <th className="px-6 py-3 text-right text-sm font-semibold text-vt-text-primary">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {links.map((link) => (
+                  <tr key={link.id} className="border-b border-vt-border-subtle hover:bg-vt-bg-secondary transition-colors">
+                    <td className="px-6 py-4">
+                      <div>
+                        <p className="font-medium text-vt-text-primary">{link.name}</p>
+                        <p className="text-xs text-vt-text-secondary mt-1 truncate">{link.url}</p>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <p className="font-semibold text-vt-text-primary flex items-center space-x-2">
+                        <span>{link.clicks}</span>
+                      </p>
+                    </td>
+                    <td className="px-6 py-4">
+                      <p className="font-semibold text-vt-text-primary">{link.conversions}</p>
+                    </td>
+                    <td className="px-6 py-4">
+                      <p className="font-semibold text-green-600">${link.earnings.toFixed(2)}</p>
+                    </td>
+                    <td className="px-6 py-4">
+                      <p className="text-vt-text-secondary">{(link.conversionRate * 100).toFixed(2)}%</p>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex justify-end space-x-2">
+                        <button
+                          onClick={() => handleCopy(link.url)}
+                          className="p-2 text-vt-text-secondary hover:text-vt-primary hover:bg-vt-bg-secondary rounded transition-colors"
+                          title="Copy link"
+                        >
+                          <Copy className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => setSelectedLinkForEdit(link)}
+                          className="p-2 text-vt-text-secondary hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                          title="Edit link"
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => setSelectedLinkForAnalytics(link)}
+                          className="p-2 text-vt-text-secondary hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                          title="View analytics"
+                        >
+                          <BarChart3 className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(link.id)}
+                          className="p-2 text-vt-text-secondary hover:text-red-500 hover:bg-red-50 rounded transition-colors"
+                          title="Delete link"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* Analytics Modal */}
+      {selectedLinkForAnalytics && (
+        <LinkAnalyticsModal
+          isOpen={!!selectedLinkForAnalytics}
+          onClose={() => setSelectedLinkForAnalytics(null)}
+          link={selectedLinkForAnalytics}
+        />
       )}
-    </div>
+
+      {/* Edit Dialog */}
+      {selectedLinkForEdit && (
+        <LinkEditDialog
+          isOpen={!!selectedLinkForEdit}
+          onClose={() => setSelectedLinkForEdit(null)}
+          link={selectedLinkForEdit}
+          onEdit={onEdit}
+        />
+      )}
+    </>
   );
 }

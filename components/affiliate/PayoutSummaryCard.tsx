@@ -15,15 +15,30 @@ export default function PayoutSummaryCard({ loading }: PayoutSummaryCardProps) {
   const { getPayoutSummary } = useAffiliatePayouts();
   const [summary, setSummary] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(loading);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchSummary = async () => {
-      setIsLoading(true);
-      const data = await getPayoutSummary();
-      if (data) {
-        setSummary(data);
+      try {
+        setIsLoading(true);
+        setError(null);
+        const data = await getPayoutSummary();
+        if (data) {
+          setSummary(data);
+        }
+      } catch (err) {
+        console.error('Error fetching payout summary:', err);
+        // Set fallback values when there's an error
+        setSummary({
+          totalPaid: 0,
+          pendingPayouts: 0,
+          nextPayoutDate: null,
+          minimumPayout: 0,
+        });
+        setError('Unable to load payout summary. Please try again later.');
+      } finally {
+        setIsLoading(false);
       }
-      setIsLoading(false);
     };
 
     fetchSummary();
@@ -52,29 +67,36 @@ export default function PayoutSummaryCard({ loading }: PayoutSummaryCardProps) {
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-      {cards.map((card, idx) => {
-        const Icon = card.icon;
-        return (
-          <div key={idx} className="bg-vt-bg-primary rounded-lg border border-vt-border p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-vt-text-secondary text-sm font-medium">{card.label}</p>
-                <p className="text-2xl font-bold text-vt-text-primary mt-2">
-                  {isLoading
-                    ? '...'
-                    : card.isDate
-                      ? card.value
-                      : `$${Number(card.value).toFixed(2)}`}
-                </p>
-              </div>
-              <div className={`w-12 h-12 rounded-lg ${card.color} flex items-center justify-center`}>
-                <Icon className="w-6 h-6" />
+    <div className="w-full">
+      {error && (
+        <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-yellow-800 text-sm">
+          {error}
+        </div>
+      )}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+        {cards.map((card, idx) => {
+          const Icon = card.icon;
+          return (
+            <div key={idx} className="bg-gray-50 rounded-lg shadow-md p-4 sm:p-6 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <p className="text-vt-text-secondary text-xs sm:text-sm font-medium">{card.label}</p>
+                  <p className="text-xl sm:text-2xl font-bold text-vt-text-primary mt-2 truncate">
+                    {isLoading
+                      ? <span className="inline-block animate-pulse">...</span>
+                      : card.isDate
+                        ? card.value
+                        : `$${Number(card.value).toFixed(2)}`}
+                  </p>
+                </div>
+                <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-lg ${card.color} flex items-center justify-center flex-shrink-0 ml-2`}>
+                  <Icon className="w-5 h-5 sm:w-6 sm:h-6" />
+                </div>
               </div>
             </div>
-          </div>
-        );
-      })}
+          );
+        })}
+      </div>
     </div>
   );
 }

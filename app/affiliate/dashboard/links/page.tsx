@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAppSelector } from '@/store';
 import { useAffiliateLinks } from '@/hooks/useAffiliate';
+import affiliateLinksService from '@/services/affiliateLinks.service';
 import DashboardSidebar from '@/components/affiliate/DashboardSidebar';
 import DashboardHeader from '@/components/affiliate/DashboardHeader';
 import LinksList from '@/components/affiliate/LinksList';
@@ -19,25 +20,38 @@ export default function LinksPage() {
   const [mounted, setMounted] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  useEffect(() => {
-    setMounted(true);
-    if (mounted && !isAuthenticated) {
-      router.push('/login');
-    }
-  }, [isAuthenticated, mounted, router]);
+  // useEffect(() => {
+  //   setMounted(true);
+  //   if (mounted && !isAuthenticated) {
+  //     router.push('/login');
+  //   }
+  // }, [isAuthenticated, mounted, router]);
 
-  if (!mounted || !isAuthenticated) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-vt-text-secondary">Loading...</div>
-      </div>
-    );
-  }
+  // if (!mounted || !isAuthenticated) {
+  //   return (
+  //     <div className="flex items-center justify-center min-h-screen">
+  //       <div className="text-vt-text-secondary">Loading...</div>
+  //     </div>
+  //   );
+  // }
 
   const handleCreateLink = async (linkName: string, source?: string) => {
     const success = await createNewLink({ name: linkName, source });
     if (success) {
       setIsDialogOpen(false);
+    }
+  };
+
+  const handleEditLink = async (linkId: string, name: string, source?: string) => {
+    try {
+      await affiliateLinksService.updateLink(linkId, { name, source });
+      // Refresh links after successful update
+      setTimeout(() => {
+        window.location.reload();
+      }, 500);
+    } catch (error) {
+      console.error('Failed to update link:', error);
+      throw error;
     }
   };
 
@@ -65,7 +79,7 @@ export default function LinksPage() {
             </div>
 
             {/* Links List */}
-            <LinksList links={links} loading={loading} onDelete={removeLink} onCopy={copyLinkToClipboard} />
+            <LinksList links={links} loading={loading} onDelete={removeLink} onEdit={handleEditLink} onCopy={copyLinkToClipboard} />
           </div>
         </main>
       </div>

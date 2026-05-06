@@ -37,11 +37,11 @@ export default function CampaignsList({ campaigns, loading }: CampaignsListProps
       {loading ? (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="bg-vt-bg-primary rounded-lg border border-vt-border h-64 animate-pulse" />
+            <div key={i} className="bg-gray-50 rounded-lg shadow-md h-64 animate-pulse" />
           ))}
         </div>
       ) : campaigns.length === 0 ? (
-        <div className="bg-vt-bg-primary rounded-lg border border-vt-border p-12 text-center">
+        <div className="bg-gray-50 rounded-lg shadow-md p-12 text-center">
           <p className="text-vt-text-secondary">No active campaigns at the moment</p>
           <p className="text-sm text-vt-text-secondary mt-2">Check back soon for special promotions</p>
         </div>
@@ -50,7 +50,7 @@ export default function CampaignsList({ campaigns, loading }: CampaignsListProps
           {campaigns.map((campaign) => (
             <div
               key={campaign.id}
-              className="bg-vt-bg-primary rounded-lg border border-vt-border overflow-hidden hover:border-vt-primary transition-colors group"
+              className="bg-gray-50 rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-all group"
             >
               {/* Campaign Hero Image */}
               {campaign.imageUrl && (

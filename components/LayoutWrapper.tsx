@@ -10,9 +10,10 @@ import CheckmarkLoader from '@/components/loaders/CheckmarkLoader';
 export function LayoutWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isAdminRoute = pathname.startsWith('/admin');
+  const isAffiliateDashboard = pathname.startsWith('/affiliate/dashboard');
 
-  if (isAdminRoute) {
-    // Admin routes: No NavBar, No Footer, No MobileBottomNav
+  if (isAdminRoute || isAffiliateDashboard) {
+    // Admin & Affiliate Dashboard routes: No NavBar, No Footer, No MobileBottomNav
     return <>{children}</>;
   }
 

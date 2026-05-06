@@ -23,7 +23,7 @@ export const bulkOrderService = {
   // Submit bulk order request
   async submitBulkOrderRequest(data: BulkOrderFormData): Promise<{ success: boolean; error?: string }> {
     try {
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+      const API_URL = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:5000';
       const response = await fetch(`${API_URL}/api/bulk-orders`, {
         method: 'POST',
         headers: {

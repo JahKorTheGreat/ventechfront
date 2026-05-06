@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAppSelector } from '@/store';
 import { useAffiliatePayouts } from '@/hooks/useAffiliate';
+import affiliatePayoutsService from '@/services/affiliatePayouts.service';
 import DashboardSidebar from '@/components/affiliate/DashboardSidebar';
 import DashboardHeader from '@/components/affiliate/DashboardHeader';
 import PayoutSummaryCard from '@/components/affiliate/PayoutSummaryCard';
@@ -29,25 +30,38 @@ export default function PayoutsPage() {
   const [mounted, setMounted] = useState(false);
   const [isRequestDialogOpen, setIsRequestDialogOpen] = useState(false);
 
-  useEffect(() => {
-    setMounted(true);
-    if (mounted && !isAuthenticated) {
-      router.push('/login');
-    }
-  }, [isAuthenticated, mounted, router]);
+  // useEffect(() => {
+  //   setMounted(true);
+  //   if (mounted && !isAuthenticated) {
+  //     router.push('/login');
+  //   }
+  // }, [isAuthenticated, mounted, router]);
 
-  if (!mounted || !isAuthenticated) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-vt-text-secondary">Loading...</div>
-      </div>
-    );
-  }
+  // if (!mounted || !isAuthenticated) {
+  //   return (
+  //     <div className="flex items-center justify-center min-h-screen">
+  //       <div className="text-vt-text-secondary">Loading...</div>
+  //     </div>
+  //   );
+  // }
 
   const handleRequestPayout = async (amount: number, methodId: string) => {
     const success = await requestPayout(amount, methodId);
     if (success) {
       setIsRequestDialogOpen(false);
+    }
+  };
+
+  const handleCancelPayout = async (payoutId: string) => {
+    try {
+      await affiliatePayoutsService.cancelPayout(payoutId);
+      // Refresh payouts after successful cancellation
+      setTimeout(() => {
+        window.location.reload();
+      }, 500);
+    } catch (error) {
+      console.error('Failed to cancel payout:', error);
+      throw error;
     }
   };
 
@@ -75,12 +89,13 @@ export default function PayoutsPage() {
             </div>
 
             {/* Payout Summary */}
-            <div className="mb-8">
+            <div className="mb-6 sm:mb-8">
+              <h2 className="text-xl sm:text-2xl font-bold text-vt-text-primary mb-4">Payout Overview</h2>
               <PayoutSummaryCard loading={loading} />
             </div>
 
             {/* Layout: Payment Methods (left) and Payouts List (right) */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-8">
               {/* Payment Methods - 1 column */}
               <div className="lg:col-span-1">
                 <PaymentMethods
@@ -94,7 +109,7 @@ export default function PayoutsPage() {
 
               {/* Payouts List - 2 columns */}
               <div className="lg:col-span-2">
-                <PayoutsList payouts={payouts} loading={loading} />
+                <PayoutsList payouts={payouts} loading={loading} onCancel={handleCancelPayout} />
               </div>
             </div>
           </div>

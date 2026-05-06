@@ -3,6 +3,7 @@
 
 'use client';
 
+import { useState } from 'react';
 import { Payout } from '@/services/affiliatePayouts.service';
 import { Copy, X } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -10,9 +11,11 @@ import toast from 'react-hot-toast';
 interface PayoutsListProps {
   payouts: Payout[];
   loading: boolean;
+  onCancel?: (payoutId: string) => Promise<void>;
 }
 
-export default function PayoutsList({ payouts, loading }: PayoutsListProps) {
+export default function PayoutsList({ payouts, loading, onCancel }: PayoutsListProps) {
+  const [cancelingId, setCancelingId] = useState<string | null>(null);
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'completed':
@@ -36,9 +39,28 @@ export default function PayoutsList({ payouts, loading }: PayoutsListProps) {
     }
   };
 
+  const handleCancelPayout = async (payoutId: string) => {
+    if (!onCancel) return;
+    
+    if (!confirm('Are you sure you want to cancel this payout request?')) {
+      return;
+    }
+
+    setCancelingId(payoutId);
+    try {
+      await onCancel(payoutId);
+      toast.success('Payout cancelled successfully');
+    } catch (error) {
+      console.error('Error cancelling payout:', error);
+      toast.error('Failed to cancel payout');
+    } finally {
+      setCancelingId(null);
+    }
+  };
+
   return (
-    <div className="bg-vt-bg-primary rounded-lg border border-vt-border">
-      <div className="p-6 border-b border-vt-border">
+    <div className="bg-gray-50 rounded-lg shadow-md">
+      <div className="p-6 shadow-sm">
         <h3 className="text-lg font-bold text-vt-text-primary">Payout Requests</h3>
         <p className="text-vt-text-secondary text-sm mt-1">History of your withdrawal requests</p>
       </div>
@@ -66,6 +88,15 @@ export default function PayoutsList({ payouts, loading }: PayoutsListProps) {
                     {payout.paymentMethod.type.replace(/_/g, ' ')} - {payout.paymentMethod.name}
                   </p>
                 </div>
+                {payout.status === 'pending' && onCancel && (
+                  <button
+                    onClick={() => handleCancelPayout(payout.id)}
+                    disabled={cancelingId === payout.id}
+                    className="px-3 py-1 text-sm bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors disabled:opacity-50 font-medium"
+                  >
+                    {cancelingId === payout.id ? 'Cancelling...' : 'Cancel'}
+                  </button>
+                )}
               </div>
 
               <div className="grid grid-cols-2 gap-4 text-sm">
@@ -86,7 +117,7 @@ export default function PayoutsList({ payouts, loading }: PayoutsListProps) {
                       <p className="text-vt-text-primary font-mono text-sm">{payout.transactionId}</p>
                       <button
                         onClick={() => handleCopyTransaction(payout.transactionId)}
-                        className="p-1 hover:bg-vt-bg-primary rounded transition-colors"
+                        className="p-1 hover:bg-gray-50 rounded transition-colors"
                       >
                         <Copy className="w-4 h-4 text-vt-text-secondary" />
                       </button>

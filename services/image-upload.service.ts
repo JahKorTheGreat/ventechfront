@@ -147,7 +147,7 @@ async function uploadToR2(
     const formData = new FormData();
     formData.append('file', file);
     
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+    const apiUrl = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:5000';
     const response = await fetch(`${apiUrl}/api/upload?folder=${encodeURIComponent(folder)}`, {
       method: 'POST',
       body: formData,

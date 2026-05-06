@@ -6,7 +6,11 @@
 import Link from 'next/link';
 import { Link2, DollarSign, CreditCard, Package } from 'lucide-react';
 
-export default function QuickActions() {
+interface QuickActionsProps {
+  onGenerateLink?: () => void;
+}
+
+export default function QuickActions({ onGenerateLink }: QuickActionsProps) {
   const actions = [
     {
       href: '/affiliate/dashboard/links',
@@ -42,11 +46,29 @@ export default function QuickActions() {
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
       {actions.map((action) => {
         const Icon = action.icon;
+        const isCreateLink = action.label === 'Create Link';
+        
+        if (isCreateLink && onGenerateLink) {
+          return (
+            <button
+              key={action.label}
+              onClick={onGenerateLink}
+              className="bg-gray-50 shadow-md rounded-lg p-4 hover:shadow-lg transition-shadow group text-left"
+            >
+              <div className={`w-10 h-10 rounded-lg ${action.color} flex items-center justify-center mb-3 group-hover:scale-110 transition-transform`}>
+                <Icon className="w-5 h-5" />
+              </div>
+              <p className="font-semibold text-vt-text-primary text-sm">{action.label}</p>
+              <p className="text-vt-text-secondary text-xs mt-1">{action.description}</p>
+            </button>
+          );
+        }
+        
         return (
           <Link
             key={action.href}
             href={action.href}
-            className="bg-vt-bg-primary border border-vt-border rounded-lg p-4 hover:border-vt-primary transition-colors group"
+            className="bg-gray-50 shadow-md rounded-lg p-4 hover:shadow-lg transition-shadow group"
           >
             <div className={`w-10 h-10 rounded-lg ${action.color} flex items-center justify-center mb-3 group-hover:scale-110 transition-transform`}>
               <Icon className="w-5 h-5" />

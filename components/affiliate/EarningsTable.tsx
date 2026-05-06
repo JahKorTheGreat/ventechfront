@@ -27,7 +27,7 @@ export default function EarningsTable({ earnings, loading }: EarningsTableProps)
   };
 
   return (
-    <div className="bg-vt-bg-primary rounded-lg border border-vt-border">
+    <div className="bg-gray-50 rounded-lg shadow-md">
       {loading ? (
         <div className="p-8 text-center text-vt-text-secondary">Loading earnings...</div>
       ) : earnings.length === 0 ? (
@@ -37,7 +37,7 @@ export default function EarningsTable({ earnings, loading }: EarningsTableProps)
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="border-b border-vt-border bg-vt-bg-secondary">
+            <thead className="border-b border-vt-border-subtle bg-vt-bg-secondary">
               <tr>
                 <th className="px-6 py-3 text-left text-sm font-semibold text-vt-text-primary">Product</th>
                 <th className="px-6 py-3 text-left text-sm font-semibold text-vt-text-primary">Order ID</th>
@@ -50,7 +50,7 @@ export default function EarningsTable({ earnings, loading }: EarningsTableProps)
             </thead>
             <tbody>
               {earnings.map((earning) => (
-                <tr key={earning.id} className="border-b border-vt-border hover:bg-vt-bg-secondary transition-colors">
+                <tr key={earning.id} className="border-b border-vt-border-subtle hover:bg-vt-bg-secondary transition-colors">
                   <td className="px-6 py-4">
                     <p className="font-medium text-vt-text-primary">{earning.productName}</p>
                   </td>

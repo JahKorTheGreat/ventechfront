@@ -90,7 +90,7 @@ const PUBLIC_ENV_VARS = {
  * The backend API should provide the following endpoints:
  * 
  * Dashboard:
- * - GET  /api/affiliate/dashboard/stats
+ * - GET  /api/affiliate/dashboard
  * - GET  /api/affiliate/dashboard/chart-data
  * - GET  /api/affiliate/dashboard/recent-earnings
  * - GET  /api/affiliate/dashboard/performance

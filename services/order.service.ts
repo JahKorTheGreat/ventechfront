@@ -5,7 +5,7 @@ export const orderService = {
   // Create new order (supports guest checkout with null userId)
   // Uses backend API to handle emails and notifications
   async createOrder(checkoutData: CheckoutData, userId: string | null) {
-    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+    const API_URL = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:5000';
     
     // Calculate totals
     // Use delivery_fee from checkoutData if provided (for pre-orders), otherwise calculate from delivery_option
@@ -198,7 +198,7 @@ export const orderService = {
 
   // Get order by ID (uses backend API to support both authenticated and guest orders)
   async getOrderById(orderId: string) {
-    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+    const API_URL = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:5000';
     
     try {
       const response = await fetch(`${API_URL}/api/orders/${orderId}`, {
@@ -308,7 +308,7 @@ export const orderService = {
   async getOrderByNumberAndEmail(orderNumberOrId: string, email: string): Promise<Order | null> {
     try {
       // Use backend API to bypass RLS and verify email
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+      const API_URL = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:5000';
       
       try {
         const response = await fetch(`${API_URL}/api/orders/track`, {
@@ -547,10 +547,7 @@ export const orderService = {
 
   // Cancel order (works for both logged-in and anonymous users)
   async cancelOrder(orderId: string, email?: string): Promise<Order> {
-    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-    
-    try {
-      const response = await fetch(`${API_URL}/api/orders/${orderId}/cancel`, {
+    const API_URL = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:5000'; {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',

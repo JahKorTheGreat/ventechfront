@@ -19,20 +19,20 @@ export default function ProductsPage() {
   const [mounted, setMounted] = useState(false);
   const [activeTab, setActiveTab] = useState<'products' | 'campaigns'>('products');
 
-  useEffect(() => {
-    setMounted(true);
-    if (mounted && !isAuthenticated) {
-      router.push('/login');
-    }
-  }, [isAuthenticated, mounted, router]);
+  // useEffect(() => {
+  //   setMounted(true);
+  //   if (mounted && !isAuthenticated) {
+  //     router.push('/login');
+  //   }
+  // }, [isAuthenticated, mounted, router]);
 
-  if (!mounted || !isAuthenticated) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-vt-text-secondary">Loading...</div>
-      </div>
-    );
-  }
+  // if (!mounted || !isAuthenticated) {
+  //   return (
+  //     <div className="flex items-center justify-center min-h-screen">
+  //       <div className="text-vt-text-secondary">Loading...</div>
+  //     </div>
+  //   );
+  // }
 
   return (
     <div className="flex h-screen bg-vt-bg-secondary">

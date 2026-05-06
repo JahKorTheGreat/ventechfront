@@ -316,7 +316,7 @@ Authorization: Bearer {token}
 
 #### Dashboard
 ```
-GET    /api/affiliate/dashboard/stats
+GET    /api/affiliate/dashboard
 GET    /api/affiliate/dashboard/chart-data?timeframe=month
 GET    /api/affiliate/dashboard/recent-earnings?limit=10
 GET    /api/affiliate/dashboard/performance

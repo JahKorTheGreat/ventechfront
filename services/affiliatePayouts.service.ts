@@ -1,7 +1,7 @@
 // Affiliate Payouts Service
 // Handles payout requests, payment methods, and payout history
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+const API_URL = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:5000';
 
 export type PaymentMethodType = 'bank_transfer' | 'mobile_money' | 'crypto_usdt';
 
