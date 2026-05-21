@@ -174,7 +174,7 @@ export default function RevenueAnalyticsPage() {
           .gte('created_at', previousStartDate.toISOString())
           .lt('created_at', previousEndDate.toISOString());
 
-        previousTotal = previousOrders?.reduce((sum, order) => sum + (parseFloat(order.total) || 0), 0) || 0;
+        previousTotal = previousOrders?.reduce((sum: number, order: any) => sum + (parseFloat(order.total) || 0), 0) || 0;
       }
       
       const growth = previousTotal > 0 ? ((total - previousTotal) / previousTotal) * 100 : 0;
@@ -203,7 +203,7 @@ export default function RevenueAnalyticsPage() {
           .select('id, category_id, category:categories!products_category_id_fkey(name)')
           .in('id', productIds);
 
-        productsMap = products?.reduce((acc, p) => {
+        productsMap = products?.reduce((acc: any, p: any) => {
           acc[p.id] = p;
           return acc;
         }, {} as any) || {};

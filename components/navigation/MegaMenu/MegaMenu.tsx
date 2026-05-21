@@ -49,7 +49,7 @@ export const MegaMenu: React.FC = () => {
               .limit(10);
             
             if (productsData && productsData.length > 0) {
-              const brandIds = [...new Set(productsData.map(p => p.brand_id).filter(Boolean))];
+              const brandIds = [...new Set(productsData.map((p: any) => p.brand_id).filter(Boolean))];
               const allBrands = await getBrands();
               const categoryBrands = allBrands
                 .filter(b => brandIds.includes(b.id) && b.show_in_mega_menu === true)

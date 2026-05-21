@@ -36,7 +36,7 @@ class SettingsService {
 
       // Update cache
       this.cache.clear();
-      data?.forEach((setting) => {
+      data?.forEach((setting: any) => {
         if (setting.value !== null) {
           this.cache.set(setting.key, setting.value);
         }
@@ -91,7 +91,7 @@ class SettingsService {
       }
 
       const result: Record<string, string | null> = {};
-      data?.forEach((setting) => {
+      data?.forEach((setting: any) => {
         result[setting.key] = setting.value;
       });
 

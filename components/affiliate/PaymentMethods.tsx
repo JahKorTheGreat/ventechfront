@@ -79,6 +79,8 @@ export default function PaymentMethods({
     }
   };
 
+  const safeMethods = Array.isArray(methods) ? methods : [];
+
   return (
     <div className="bg-gray-50 rounded-lg shadow-md">
       <div className="p-6 shadow-sm">
@@ -162,14 +164,14 @@ export default function PaymentMethods({
       {/* Methods List */}
       {loading ? (
         <div className="p-8 text-center text-vt-text-secondary">Loading methods...</div>
-      ) : methods.length === 0 ? (
+      ) : safeMethods.length === 0 ? (
         <div className="p-8 text-center text-vt-text-secondary">
           <p>No payment methods added</p>
           <p className="text-sm mt-2">Add a payment method to request payouts</p>
         </div>
       ) : (
         <div className="divide-y divide-vt-border">
-          {methods.map((method) => (
+          {safeMethods.map((method) => (
             <div key={method.id} className="p-4 hover:bg-vt-bg-secondary transition-colors">
               <div className="flex items-center justify-between">
                 <div className="flex-1">

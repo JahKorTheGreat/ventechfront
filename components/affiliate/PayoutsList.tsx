@@ -16,6 +16,7 @@ interface PayoutsListProps {
 
 export default function PayoutsList({ payouts, loading, onCancel }: PayoutsListProps) {
   const [cancelingId, setCancelingId] = useState<string | null>(null);
+  const safePayouts = Array.isArray(payouts) ? payouts : [];
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'completed':
@@ -67,34 +68,36 @@ export default function PayoutsList({ payouts, loading, onCancel }: PayoutsListP
 
       {loading ? (
         <div className="p-8 text-center text-vt-text-secondary">Loading payouts...</div>
-      ) : payouts.length === 0 ? (
+      ) : safePayouts.length === 0 ? (
         <div className="p-8 text-center text-vt-text-secondary">
           <p>No payout requests yet</p>
           <p className="text-sm mt-2">Request a payout once you reach the minimum amount</p>
         </div>
       ) : (
         <div className="divide-y divide-vt-border">
-          {payouts.map((payout) => (
-            <div key={payout.id} className="p-6 hover:bg-vt-bg-secondary transition-colors">
-              <div className="flex items-center justify-between mb-3">
-                <div>
-                  <p className="font-semibold text-vt-text-primary flex items-center space-x-2">
-                    <span>${payout.amount.toFixed(2)}</span>
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium capitalize ${getStatusColor(payout.status)}`}>
-                      {payout.status}
-                    </span>
-                  </p>
-                  <p className="text-sm text-vt-text-secondary mt-1">
-                    {payout.paymentMethod.type.replace(/_/g, ' ')} - {payout.paymentMethod.name}
-                  </p>
-                </div>
-                {payout.status === 'pending' && onCancel && (
+          {safePayouts.map((payout) => {
+            const payoutData = payout as any;
+            return (
+              <div key={payoutData.id} className="p-6 hover:bg-vt-bg-secondary transition-colors">
+                <div className="flex items-center justify-between mb-3">
+                  <div>
+                    <p className="font-semibold text-vt-text-primary flex items-center space-x-2">
+                      <span>${payoutData.amount.toFixed(2)}</span>
+                      <span className={`px-3 py-1 rounded-full text-xs font-medium capitalize ${getStatusColor(payoutData.status)}`}>
+                        {payoutData.status}
+                      </span>
+                    </p>
+                    <p className="text-sm text-vt-text-secondary mt-1">
+                      {(payoutData.paymentMethod?.type || 'payment_method').replace(/_/g, ' ')} - {payoutData.paymentMethod?.name || 'Method'}
+                    </p>
+                  </div>
+                {payoutData.status === 'pending' && onCancel && (
                   <button
-                    onClick={() => handleCancelPayout(payout.id)}
-                    disabled={cancelingId === payout.id}
+                    onClick={() => handleCancelPayout(payoutData.id)}
+                    disabled={cancelingId === payoutData.id}
                     className="px-3 py-1 text-sm bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors disabled:opacity-50 font-medium"
                   >
-                    {cancelingId === payout.id ? 'Cancelling...' : 'Cancel'}
+                    {cancelingId === payoutData.id ? 'Cancelling...' : 'Cancel'}
                   </button>
                 )}
               </div>
@@ -102,21 +105,21 @@ export default function PayoutsList({ payouts, loading, onCancel }: PayoutsListP
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
                   <p className="text-vt-text-secondary">Requested</p>
-                  <p className="text-vt-text-primary font-medium">{new Date(payout.requestedAt).toLocaleDateString()}</p>
+                  <p className="text-vt-text-primary font-medium">{new Date(payoutData.requestedAt).toLocaleDateString()}</p>
                 </div>
-                {payout.processedAt && (
+                {payoutData.processedAt && (
                   <div>
                     <p className="text-vt-text-secondary">Processed</p>
-                    <p className="text-vt-text-primary font-medium">{new Date(payout.processedAt).toLocaleDateString()}</p>
+                    <p className="text-vt-text-primary font-medium">{new Date(payoutData.processedAt).toLocaleDateString()}</p>
                   </div>
                 )}
-                {payout.transactionId && (
+                {payoutData.transactionId && (
                   <div className="col-span-2">
                     <p className="text-vt-text-secondary mb-1">Transaction ID</p>
                     <div className="flex items-center space-x-2">
-                      <p className="text-vt-text-primary font-mono text-sm">{payout.transactionId}</p>
+                      <p className="text-vt-text-primary font-mono text-sm">{payoutData.transactionId}</p>
                       <button
-                        onClick={() => handleCopyTransaction(payout.transactionId)}
+                        onClick={() => handleCopyTransaction(payoutData.transactionId)}
                         className="p-1 hover:bg-gray-50 rounded transition-colors"
                       >
                         <Copy className="w-4 h-4 text-vt-text-secondary" />
@@ -124,20 +127,21 @@ export default function PayoutsList({ payouts, loading, onCancel }: PayoutsListP
                     </div>
                   </div>
                 )}
-                {payout.failureReason && (
+                {payoutData.failureReason && (
                   <div className="col-span-2 bg-red-50 border border-red-200 rounded p-3">
                     <div className="flex items-start space-x-2">
                       <X className="w-4 h-4 text-red-600 mt-0.5" />
                       <div>
                         <p className="text-xs font-medium text-red-800">Failure Reason</p>
-                        <p className="text-xs text-red-700 mt-1">{payout.failureReason}</p>
+                        <p className="text-xs text-red-700 mt-1">{payoutData.failureReason}</p>
                       </div>
                     </div>
                   </div>
                 )}
               </div>
             </div>
-          ))}
+          );
+        })}
         </div>
       )}
     </div>

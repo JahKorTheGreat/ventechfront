@@ -13,6 +13,7 @@ interface CampaignsListProps {
 }
 
 export default function CampaignsList({ campaigns, loading }: CampaignsListProps) {
+  const safeCampaigns = Array.isArray(campaigns) ? campaigns : [];
   const handleCopyCampaignLink = (campaignId: string) => {
     const campaignLink = `${window.location.origin}?campaign=${campaignId}`;
     navigator.clipboard.writeText(campaignLink);
@@ -40,14 +41,14 @@ export default function CampaignsList({ campaigns, loading }: CampaignsListProps
             <div key={i} className="bg-gray-50 rounded-lg shadow-md h-64 animate-pulse" />
           ))}
         </div>
-      ) : campaigns.length === 0 ? (
+      ) : safeCampaigns.length === 0 ? (
         <div className="bg-gray-50 rounded-lg shadow-md p-12 text-center">
           <p className="text-vt-text-secondary">No active campaigns at the moment</p>
           <p className="text-sm text-vt-text-secondary mt-2">Check back soon for special promotions</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {campaigns.map((campaign) => (
+          {safeCampaigns.map((campaign) => (
             <div
               key={campaign.id}
               className="bg-gray-50 rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-all group"
@@ -95,7 +96,7 @@ export default function CampaignsList({ campaigns, loading }: CampaignsListProps
 
                 {/* Products Count */}
                 <div className="mt-4 text-sm text-vt-text-secondary">
-                  {campaign.products.length} product{campaign.products.length !== 1 ? 's' : ''} in this campaign
+                  {Array.isArray(campaign.products) ? campaign.products.length : 0} product{Array.isArray(campaign.products) && campaign.products.length === 1 ? '' : 's'} in this campaign
                 </div>
 
                 {/* Action Button */}

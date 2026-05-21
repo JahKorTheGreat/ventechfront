@@ -11,6 +11,7 @@ import {
   deleteLink,
   fetchEarnings,
   fetchEarningsSummary,
+  fetchReferrals,
   fetchPayments,
   fetchProducts,
   fetchCampaigns,
@@ -39,7 +40,7 @@ export const useDashboardStats = () => {
       dispatch(fetchDashboardStats());
       dispatch(fetchChartData(selectedTimeframe));
     }
-  }, [dispatch, isAuthenticated, selectedTimeframe]);
+  }, [dispatch, isAuthenticated]);
 
   const changeTimeframe = useCallback(
     (timeframe: 'week' | 'month' | 'year') => {
@@ -95,17 +96,16 @@ export const useAffiliateLinks = () => {
     async (linkId: string) => {
       try {
         await dispatch(deleteLink(linkId)).unwrap();
-        return true;
       } catch (error) {
         console.error('Failed to delete link:', error);
-        return false;
+        throw error;
       }
     },
     [dispatch]
   );
 
-  const copyLinkToClipboard = useCallback((url: string): boolean => {
-    return affiliateLinksService.copyLinkToClipboard(url);
+  const copyLinkToClipboard = useCallback(async (url: string): Promise<boolean> => {
+    return await affiliateLinksService.copyLinkToClipboard(url);
   }, []);
 
   return {
@@ -122,7 +122,7 @@ export const useAffiliateLinks = () => {
 /**
  * Hook for managing earnings and commissions
  */
-export const useAffiliateEarnings = (filters?: { status?: string }) => {
+export const useAffiliateEarnings = () => {
   const dispatch = useAppDispatch();
   const { earnings, earningsSummary, loading: earningsLoading, error } = useAppSelector((state) => state.affiliate);
   const { isAuthenticated } = useAppSelector((state) => state.auth);
@@ -130,16 +130,16 @@ export const useAffiliateEarnings = (filters?: { status?: string }) => {
   // Fetch earnings on mount and when authenticated
   useEffect(() => {
     if (isAuthenticated) {
-      dispatch(fetchEarnings(filters));
+      dispatch(fetchEarnings());
       dispatch(fetchEarningsSummary());
     }
-  }, [dispatch, isAuthenticated, filters?.status]);
+  }, [dispatch, isAuthenticated]);
 
   const getEarningsByStatus = useCallback(
-    async (status: string) => {
+    async (status: "pending" | "approved" | "rejected" | "paid" | "all") => {
       try {
-        const result = await affiliateEarningsService.getEarnings({ status });
-        return result.earnings;
+        const result = await affiliateEarningsService.getEarnings();
+        return result.earnings.filter(e => status === 'all' || e.status === status);
       } catch (error) {
         console.error('Failed to get earnings by status:', error);
         return [];
@@ -158,7 +158,7 @@ export const useAffiliateEarnings = (filters?: { status?: string }) => {
   }, []);
 
   const exportEarningsCSV = useCallback(
-    async (filters?: { status?: string; startDate?: string; endDate?: string }) => {
+    async (filters?: { status?: "pending" | "approved" | "rejected" | "paid" | "all"; startDate?: string; endDate?: string }) => {
       try {
         const blob = await affiliateEarningsService.exportEarnings(filters);
         const url = URL.createObjectURL(blob);
@@ -185,15 +185,38 @@ export const useAffiliateEarnings = (filters?: { status?: string }) => {
     getMonthlyBreakdown,
     exportEarningsCSV,
     refresh: () => {
-      dispatch(fetchEarnings(filters));
+      dispatch(fetchEarnings());
       dispatch(fetchEarningsSummary());
     },
   };
 };
 
 /**
- * Hook for managing payouts and payment methods
+ * Hook for managing affiliate referrals
  */
+export const useAffiliateReferrals = () => {
+  const dispatch = useAppDispatch();
+  const { referrals, loading, error } = useAppSelector((state) => ({
+    referrals: state.affiliate.referrals,
+    loading: state.affiliate.loading.referrals,
+    error: state.affiliate.error,
+  }));
+  const { isAuthenticated } = useAppSelector((state) => state.auth);
+
+  // Fetch referrals on mount and when authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      dispatch(fetchReferrals());
+    }
+  }, [dispatch, isAuthenticated]);
+
+  return {
+    referrals,
+    loading,
+    error,
+    refresh: () => dispatch(fetchReferrals()),
+  };
+};
 export const useAffiliatePayouts = () => {
   const dispatch = useAppDispatch();
   const { payouts, paymentMethods, loading: payoutsLoading, error } = useAppSelector((state) => state.affiliate);
@@ -277,13 +300,17 @@ export const useAffiliatePayouts = () => {
   );
 
   const getPayoutSummary = useCallback(async (): Promise<PayoutSummary | null> => {
+    if (!isAuthenticated) {
+      return null;
+    }
+
     try {
       return await affiliatePayoutsService.getPayoutSummary();
     } catch (error) {
       console.error('Failed to get payout summary:', error);
       return null;
     }
-  }, []);
+  }, [isAuthenticated]);
 
   const cancelPayout = useCallback(
     async (payoutId: string) => {
@@ -320,7 +347,12 @@ export const useAffiliatePayouts = () => {
  */
 export const useAffiliateProducts = () => {
   const dispatch = useAppDispatch();
-  const { products, campaigns, loading: productsLoading, error } = useAppSelector((state) => state.affiliate);
+  const {
+    products,
+    campaigns,
+    loading: { products: productsLoading, campaigns: campaignsLoading },
+    error,
+  } = useAppSelector((state) => state.affiliate);
   const { isAuthenticated } = useAppSelector((state) => state.auth);
 
   // Fetch products and campaigns on mount
@@ -352,7 +384,8 @@ export const useAffiliateProducts = () => {
   return {
     products,
     campaigns,
-    loading: productsLoading,
+    loadingProducts: productsLoading,
+    loadingCampaigns: campaignsLoading,
     error,
     getTopProducts,
     getCategories,

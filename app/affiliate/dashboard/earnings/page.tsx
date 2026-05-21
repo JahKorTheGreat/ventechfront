@@ -18,28 +18,26 @@ export default function EarningsPage() {
   const { isAuthenticated, user } = useAppSelector((state) => state.auth);
   const [statusFilter, setStatusFilter] = useState('all');
   const [dateRange, setDateRange] = useState<{ start: string; end: string }>({ start: '', end: '' });
-  const { earnings, summary, loading, exportEarningsCSV } = useAffiliateEarnings({
-    status: statusFilter !== 'all' ? statusFilter : undefined,
-  });
+  const { earnings, summary, loading, exportEarningsCSV } = useAffiliateEarnings();
   const [mounted, setMounted] = useState(false);
 
-  // useEffect(() => {
-  //   setMounted(true);
-  //   if (mounted && !isAuthenticated) {
-  //     router.push('/login');
-  //   }
-  // }, [isAuthenticated, mounted, router]);
+  useEffect(() => {
+    setMounted(true);
+    if (mounted && !isAuthenticated) {
+      router.push('/login');
+    }
+  }, [isAuthenticated, mounted, router]);
 
-  // if (!mounted || !isAuthenticated) {
-  //   return (
-  //     <div className="flex items-center justify-center min-h-screen">
-  //       <div className="text-vt-text-secondary">Loading...</div>
-  //     </div>
-  //   );
-  // }
+  if (!mounted || !isAuthenticated) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-vt-text-secondary">Loading...</div>
+      </div>
+    );
+  }
 
   const handleExport = async () => {
-    await exportEarningsCSV({ status: statusFilter !== 'all' ? statusFilter : undefined });
+    await exportEarningsCSV({ status: statusFilter !== 'all' ? (statusFilter as "pending" | "approved" | "rejected" | "paid") : undefined });
   };
 
   const handleDateRangeChange = (startDate: string, endDate: string) => {
@@ -65,7 +63,7 @@ export default function EarningsPage() {
 
             {/* Summary Cards */}
             <div className="mb-8">
-              <EarningsSummary summary={summary} loading={loading} />
+              <EarningsSummary summary={summary} loading={loading.earnings} />
             </div>
 
             {/* Filters and Export */}
@@ -91,7 +89,7 @@ export default function EarningsPage() {
             </div>
 
             {/* Earnings Table */}
-            <EarningsTable earnings={earnings} loading={loading} />
+            <EarningsTable earnings={earnings} loading={loading.earnings} />
           </div>
         </main>
       </div>

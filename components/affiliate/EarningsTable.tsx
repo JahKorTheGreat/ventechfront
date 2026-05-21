@@ -11,6 +11,7 @@ interface EarningsTableProps {
 }
 
 export default function EarningsTable({ earnings, loading }: EarningsTableProps) {
+  const safeEarnings = Array.isArray(earnings) ? earnings : [];
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'paid':
@@ -30,7 +31,7 @@ export default function EarningsTable({ earnings, loading }: EarningsTableProps)
     <div className="bg-gray-50 rounded-lg shadow-md">
       {loading ? (
         <div className="p-8 text-center text-vt-text-secondary">Loading earnings...</div>
-      ) : earnings.length === 0 ? (
+      ) : safeEarnings.length === 0 ? (
         <div className="p-8 text-center text-vt-text-secondary">
           <p>No earnings found</p>
         </div>
@@ -49,7 +50,7 @@ export default function EarningsTable({ earnings, loading }: EarningsTableProps)
               </tr>
             </thead>
             <tbody>
-              {earnings.map((earning) => (
+              {safeEarnings.map((earning) => (
                 <tr key={earning.id} className="border-b border-vt-border-subtle hover:bg-vt-bg-secondary transition-colors">
                   <td className="px-6 py-4">
                     <p className="font-medium text-vt-text-primary">{earning.productName}</p>
@@ -61,10 +62,10 @@ export default function EarningsTable({ earnings, loading }: EarningsTableProps)
                     <p className="font-medium text-vt-text-primary">${earning.amount.toFixed(2)}</p>
                   </td>
                   <td className="px-6 py-4 text-right">
-                    <p className="font-semibold text-green-600">${earning.commission.toFixed(2)}</p>
+                    <p className="font-semibold text-green-600">${(earning.commission ?? 0).toFixed(2)}</p>
                   </td>
                   <td className="px-6 py-4 text-center">
-                    <p className="text-vt-text-secondary">{(earning.commissionRate * 100).toFixed(0)}%</p>
+                    <p className="text-vt-text-secondary">{earning.commission ? ((earning.commission / (earning.amount || 1)) * 100).toFixed(0) + '%' : '--'}</p>
                   </td>
                   <td className="px-6 py-4">
                     <p className="text-vt-text-secondary text-sm">{new Date(earning.date).toLocaleDateString()}</p>

@@ -69,6 +69,14 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: '**.r2.cloudflarestorage.com',
       },
+      {
+        protocol: 'https',
+        hostname: '**.supabase.co',
+      },
+      {
+        protocol: 'https',
+        hostname: '**.storage.googleapis.com',
+      },
     ],
     // Increase cache time for external images
     minimumCacheTTL: 60,
@@ -77,7 +85,9 @@ const nextConfig: NextConfig = {
     unoptimized: process.env.NODE_ENV === 'development',
   },
   // Turbopack configuration (Next.js 16 default)
-  turbopack: {},
+  turbopack: {
+    root: __dirname,
+  },
   // Webpack configuration (for production builds that may use webpack)
   webpack: (config, { isServer }) => {
     // Suppress punycode deprecation warning in webpack

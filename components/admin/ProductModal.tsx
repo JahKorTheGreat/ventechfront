@@ -205,7 +205,7 @@ export function ProductModal({ isOpen, onClose, product, onSuccess }: ProductMod
         .select('attribute_id')
         .eq('product_id', productId);
       if (error) throw error;
-      setSelectedAttributes(data?.map(d => d.attribute_id) || []);
+      setSelectedAttributes(data?.map((d: any) => d.attribute_id) || []);
     } catch (error) {
       console.error('Error fetching product attributes:', error);
     }

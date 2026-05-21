@@ -136,18 +136,14 @@ export const NavBar = () => {
     <nav className="bg-white shadow-md sticky top-0 z-50">
       <div className="container mx-auto px-3 sm:px-4">
         {/* Top Bar */}
-        <div className="flex items-center justify-between h-14 sm:h-16 md:h-20">
+        <div className="flex items-center justify-between h-16 sm:h-18 md:h-22">
           {/* Logo */}
           <Link href="/" className="flex items-center flex-shrink-0">
-            <Image
-              src="https://files.ventechgadgets.com/ventech_logo_1.png"
-              alt="VENTECH"
-              width={120}
-              height={48}
-              className="object-contain h-10 sm:h-12 md:h-14"
-              priority
+            <img
+              src="/logo/ventech_logo_1.png"
+              alt="Ventech logo"
+              className="object-contain max-h-[48px] sm:max-h-[56px] md:max-h-[64px] w-auto"
             />
-
           </Link>
 
           {/* Desktop Search Bar */}

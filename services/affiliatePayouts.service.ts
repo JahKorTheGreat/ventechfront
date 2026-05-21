@@ -1,7 +1,11 @@
 // Affiliate Payouts Service
 // Handles payout requests, payment methods, and payout history
+// Enhanced with production-ready features: validation, timeouts, retries, caching
 
-const API_URL = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:5000';
+import { apiRequest, validators } from '@/lib/affiliateApiClient';
+
+const API_BASE = '/payouts';
+const PAYMENT_METHODS_BASE = '/payment-methods';
 
 export type PaymentMethodType = 'bank_transfer' | 'mobile_money' | 'crypto_usdt';
 
@@ -25,12 +29,12 @@ export interface PaymentMethodInput {
 export interface Payout {
   id: string;
   amount: number;
-  status: 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled';
-  paymentMethod: PaymentMethod;
-  requestedAt: string;
-  processedAt?: string;
-  failureReason?: string;
-  transactionId?: string;
+  date: string;
+  status: string;
+}
+
+export interface PayoutsResponse {
+  payouts: Payout[];
 }
 
 export interface PayoutSummary {
@@ -44,26 +48,14 @@ export interface PayoutSummary {
 export const affiliatePayoutsService = {
   /**
    * Get all payouts for the authenticated affiliate
+   * GET /api/affiliate/payouts
    */
-  async getPayouts(status?: string): Promise<Payout[]> {
+  async getPayouts(): Promise<PayoutsResponse> {
     try {
-      const params = new URLSearchParams();
-      if (status) params.append('status', status);
-
-      const response = await fetch(`${API_URL}/api/affiliate/payouts?${params.toString()}`, {
+      return await apiRequest<PayoutsResponse>({
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${typeof window !== 'undefined' ? localStorage.getItem('token') || '' : ''}`,
-        },
+        url: API_BASE,
       });
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch payouts: ${response.status}`);
-      }
-
-      const result = await response.json();
-      return result.data;
     } catch (error) {
       console.error('Error fetching payouts:', error);
       throw error;
@@ -75,20 +67,10 @@ export const affiliatePayoutsService = {
    */
   async getPayoutSummary(): Promise<PayoutSummary> {
     try {
-      const response = await fetch(`${API_URL}/api/affiliate/payouts/summary`, {
+      return await apiRequest({
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${typeof window !== 'undefined' ? localStorage.getItem('token') || '' : ''}`,
-        },
+        url: `${API_BASE}/summary`,
       });
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch payout summary: ${response.status}`);
-      }
-
-      const result = await response.json();
-      return result.data;
     } catch (error) {
       console.error('Error fetching payout summary:', error);
       throw error;
@@ -99,23 +81,23 @@ export const affiliatePayoutsService = {
    * Request a new payout
    */
   async requestPayout(data: { amount: number; paymentMethodId: string }): Promise<Payout> {
+    // Input validation
+    const validationErrors = validators.validateObject(data, {
+      amount: (value) => validators.required(value, 'amount') || validators.number(value, 'amount', 0.01),
+      paymentMethodId: (value) => validators.required(value, 'paymentMethodId') || validators.string(value, 'paymentMethodId', 1, 50),
+    });
+
+    if (validationErrors.length > 0) {
+      throw new Error(`Validation errors: ${validationErrors.map(e => e.message).join(', ')}`);
+    }
+
     try {
-      const response = await fetch(`${API_URL}/api/affiliate/payouts/request`, {
+      return await apiRequest({
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${typeof window !== 'undefined' ? localStorage.getItem('token') || '' : ''}`,
-        },
-        body: JSON.stringify(data),
+        url: `${API_BASE}/request`,
+        data,
+        skipCache: true,
       });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || `Failed to request payout: ${response.status}`);
-      }
-
-      const result = await response.json();
-      return result.data;
     } catch (error) {
       console.error('Error requesting payout:', error);
       throw error;
@@ -126,21 +108,18 @@ export const affiliatePayoutsService = {
    * Cancel a payout request (only if pending)
    */
   async cancelPayout(payoutId: string): Promise<Payout> {
+    // Input validation
+    const payoutIdError = validators.required(payoutId, 'payoutId') || validators.string(payoutId, 'payoutId', 1, 50);
+    if (payoutIdError) {
+      throw new Error(payoutIdError.message);
+    }
+
     try {
-      const response = await fetch(`${API_URL}/api/affiliate/payouts/${payoutId}/cancel`, {
+      return await apiRequest({
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${typeof window !== 'undefined' ? localStorage.getItem('token') || '' : ''}`,
-        },
+        url: `${API_BASE}/${payoutId}/cancel`,
+        skipCache: true,
       });
-
-      if (!response.ok) {
-        throw new Error(`Failed to cancel payout: ${response.status}`);
-      }
-
-      const result = await response.json();
-      return result.data;
     } catch (error) {
       console.error('Error cancelling payout:', error);
       throw error;
@@ -152,20 +131,10 @@ export const affiliatePayoutsService = {
    */
   async getPaymentMethods(): Promise<PaymentMethod[]> {
     try {
-      const response = await fetch(`${API_URL}/api/affiliate/payment-methods`, {
+      return await apiRequest({
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${typeof window !== 'undefined' ? localStorage.getItem('token') || '' : ''}`,
-        },
+        url: PAYMENT_METHODS_BASE,
       });
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch payment methods: ${response.status}`);
-      }
-
-      const result = await response.json();
-      return result.data;
     } catch (error) {
       console.error('Error fetching payment methods:', error);
       throw error;
@@ -176,23 +145,24 @@ export const affiliatePayoutsService = {
    * Add a new payment method
    */
   async addPaymentMethod(data: PaymentMethodInput): Promise<PaymentMethod> {
+    // Input validation
+    const validationErrors = validators.validateObject(data, {
+      type: (value) => validators.required(value, 'type') || validators.oneOf(value, 'type', ['bank_transfer', 'mobile_money', 'crypto_usdt']),
+      name: (value) => validators.required(value, 'name') || validators.string(value, 'name', 1, 100),
+      details: (value) => validators.required(value, 'details') || validators.string(value, 'details', 1, 500),
+    });
+
+    if (validationErrors.length > 0) {
+      throw new Error(`Validation errors: ${validationErrors.map(e => e.message).join(', ')}`);
+    }
+
     try {
-      const response = await fetch(`${API_URL}/api/affiliate/payment-methods`, {
+      return await apiRequest({
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${typeof window !== 'undefined' ? localStorage.getItem('token') || '' : ''}`,
-        },
-        body: JSON.stringify(data),
+        url: PAYMENT_METHODS_BASE,
+        data,
+        skipCache: true,
       });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || `Failed to add payment method: ${response.status}`);
-      }
-
-      const result = await response.json();
-      return result.data;
     } catch (error) {
       console.error('Error adding payment method:', error);
       throw error;
@@ -203,22 +173,25 @@ export const affiliatePayoutsService = {
    * Update a payment method
    */
   async updatePaymentMethod(methodId: string, data: Partial<PaymentMethodInput>): Promise<PaymentMethod> {
+    // Input validation
+    const validationErrors = validators.validateObject({ methodId, ...data }, {
+      methodId: (value) => validators.required(value, 'methodId') || validators.string(value, 'methodId', 1, 50),
+      type: (value) => value ? validators.oneOf(value, 'type', ['bank_transfer', 'mobile_money', 'crypto_usdt']) : null,
+      name: (value) => value ? validators.string(value, 'name', 1, 100) : null,
+      details: (value) => value ? validators.string(value, 'details', 1, 500) : null,
+    });
+
+    if (validationErrors.length > 0) {
+      throw new Error(`Validation errors: ${validationErrors.map(e => e.message).join(', ')}`);
+    }
+
     try {
-      const response = await fetch(`${API_URL}/api/affiliate/payment-methods/${methodId}`, {
+      return await apiRequest({
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${typeof window !== 'undefined' ? localStorage.getItem('token') || '' : ''}`,
-        },
-        body: JSON.stringify(data),
+        url: `${PAYMENT_METHODS_BASE}/${methodId}`,
+        data,
+        skipCache: true,
       });
-
-      if (!response.ok) {
-        throw new Error(`Failed to update payment method: ${response.status}`);
-      }
-
-      const result = await response.json();
-      return result.data;
     } catch (error) {
       console.error('Error updating payment method:', error);
       throw error;
@@ -229,18 +202,18 @@ export const affiliatePayoutsService = {
    * Delete a payment method
    */
   async deletePaymentMethod(methodId: string): Promise<void> {
-    try {
-      const response = await fetch(`${API_URL}/api/affiliate/payment-methods/${methodId}`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${typeof window !== 'undefined' ? localStorage.getItem('token') || '' : ''}`,
-        },
-      });
+    // Input validation
+    const methodIdError = validators.required(methodId, 'methodId') || validators.string(methodId, 'methodId', 1, 50);
+    if (methodIdError) {
+      throw new Error(methodIdError.message);
+    }
 
-      if (!response.ok) {
-        throw new Error(`Failed to delete payment method: ${response.status}`);
-      }
+    try {
+      await apiRequest({
+        method: 'DELETE',
+        url: `${PAYMENT_METHODS_BASE}/${methodId}`,
+        skipCache: true,
+      });
     } catch (error) {
       console.error('Error deleting payment method:', error);
       throw error;
@@ -251,21 +224,18 @@ export const affiliatePayoutsService = {
    * Set default payment method
    */
   async setDefaultPaymentMethod(methodId: string): Promise<PaymentMethod> {
+    // Input validation
+    const methodIdError = validators.required(methodId, 'methodId') || validators.string(methodId, 'methodId', 1, 50);
+    if (methodIdError) {
+      throw new Error(methodIdError.message);
+    }
+
     try {
-      const response = await fetch(`${API_URL}/api/affiliate/payment-methods/${methodId}/set-default`, {
+      return await apiRequest({
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${typeof window !== 'undefined' ? localStorage.getItem('token') || '' : ''}`,
-        },
+        url: `${PAYMENT_METHODS_BASE}/${methodId}/set-default`,
+        skipCache: true,
       });
-
-      if (!response.ok) {
-        throw new Error(`Failed to set default payment method: ${response.status}`);
-      }
-
-      const result = await response.json();
-      return result.data;
     } catch (error) {
       console.error('Error setting default payment method:', error);
       throw error;

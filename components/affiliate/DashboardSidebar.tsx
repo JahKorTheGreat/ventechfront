@@ -28,50 +28,52 @@ export default function DashboardSidebar() {
   };
 
   return (
-    <aside className="hidden lg:flex lg:w-64 bg-gray-50 shadow-lg flex-col overflow-y-auto">
-      <div className="h-16 flex items-center justify-center px-4 lg:px-6 shadow-md border-b border-gray-200">
-        <Link href="/affiliate/dashboard" className="hover:opacity-80 transition-opacity">
+    <aside className="hidden lg:flex w-72 shrink-0 flex-col bg-white border-r border-slate-200 shadow-sm">
+      <div className="flex h-16 items-center px-6 border-b border-slate-200">
+        <Link href="/affiliate/dashboard" className="flex items-center gap-3">
           <Image
-            src="/logo/ventech_logo-black.png"
-            alt="VENTECH"
-            width={40}
+            src="/logo/ventech_logo_1.png"
+            alt="Ventech logo"
+            width={120}
             height={40}
-            className="h-10 w-auto"
+            className="h-9 w-auto object-contain"
+            style={{ width: 'auto', height: 'auto', maxHeight: '36px' }}
+            priority
           />
         </Link>
       </div>
 
-      <nav className="flex-1 p-4 lg:p-6 space-y-2">
+      <nav className="flex-1 overflow-y-auto px-4 py-5 space-y-2">
         {navItems.map((item) => {
           const Icon = item.icon;
-          // Exact match only - each tab at same level
           const isActive = pathname === item.href;
 
           return (
             <Link
               key={item.href}
               href={item.href}
-              className={`flex items-center space-x-3 px-3 lg:px-4 py-2 lg:py-3 rounded-lg transition-all duration-200 border-l-4 text-sm lg:text-base ${
+              className={`group flex items-center gap-3 rounded-2xl border border-transparent px-4 py-3 text-sm font-medium transition-all duration-200 ${
                 isActive
-                  ? 'bg-orange-50 text-orange-700 border-l-orange-500 font-semibold'
-                  : 'text-vt-text-secondary border-l-transparent hover:bg-gray-100 hover:text-vt-text-primary'
+                  ? 'bg-orange-50 text-orange-700 shadow-sm border-orange-200'
+                  : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
               }`}
             >
-              <Icon className="w-5 h-5 flex-shrink-0" />
-              <span className="font-medium">{item.label}</span>
+              <span className={`inline-flex h-11 w-11 items-center justify-center rounded-2xl ${isActive ? 'bg-orange-100 text-orange-600' : 'bg-slate-100 text-slate-600'} transition-colors`}>
+                <Icon className="h-5 w-5" />
+              </span>
+              <span className="truncate">{item.label}</span>
             </Link>
           );
         })}
       </nav>
 
-      {/* Logout Button */}
-      <div className="p-4 lg:p-6 border-t border-gray-200 mt-auto">
+      <div className="border-t border-slate-200 px-5 py-4">
         <button
           onClick={handleLogout}
-          className="w-full flex items-center space-x-3 px-3 lg:px-4 py-2 lg:py-3 text-vt-text-secondary hover:bg-vt-bg-secondary hover:text-vt-text-primary rounded-lg transition-colors text-sm lg:text-base"
+          className="flex w-full items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-100 transition"
         >
-          <LogOut className="w-5 h-5 flex-shrink-0" />
-          <span className="font-medium">Logout</span>
+          <LogOut className="h-4.5 w-4.5" />
+          Logout
         </button>
       </div>
     </aside>

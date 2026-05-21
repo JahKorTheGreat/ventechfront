@@ -1,28 +1,30 @@
 // Affiliate Stats Service
 // Handles dashboard statistics, chart data, and earnings summaries
+// Updated to use affiliateApiClient for consistent API calls
 
-const API_URL = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:5000';
+import { apiRequest } from '@/lib/affiliateApiClient';
 
+const API_BASE = '/stats';
+
+// Type definitions
 export interface DashboardStats {
   totalEarnings: number;
-  monthlyEarnings: number;
-  totalCommissions: number;
   totalClicks: number;
-  conversionRate: number;
-  activeLinks: number;
-  tier: string;
-  tierProgress?: {
-    current: number;
-    required: number;
-    nextTier?: string;
-  };
+  totalConversions: number;
+  totalReferrals: number;
 }
 
 export interface ChartDataPoint {
   date: string;
   earnings: number;
   clicks: number;
-  conversions: number;
+}
+
+export interface ChartResponse {
+  labels: string[];
+  earnings: number[];
+  clicks: number[];
+  conversions: number[];
 }
 
 export interface RecentEarning {
@@ -37,109 +39,89 @@ export interface RecentEarning {
 export const affiliateStatsService = {
   /**
    * Get dashboard statistics for the authenticated affiliate
+   * GET /api/affiliate/dashboard/stats
    */
   async getDashboardStats(): Promise<DashboardStats> {
     try {
-      const response = await fetch(`${API_URL}/api/affiliate/dashboard`, {
+      console.log('📊 Fetching dashboard stats...');
+      const response = await apiRequest<DashboardStats>({
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${typeof window !== 'undefined' ? localStorage.getItem('token') || '' : ''}`,
-        },
+        url: '/dashboard/stats',
+        skipCache: false,
       });
 
-      if (!response.ok) {
-        throw new Error(`Failed to fetch dashboard stats: ${response.status}`);
-      }
-
-      const result = await response.json();
-      return result.data;
+      console.log('✅ Dashboard stats received:', response);
+      return response;
     } catch (error) {
-      console.error('Error fetching dashboard stats:', error);
+      console.error('❌ Error fetching dashboard stats:', error);
       throw error;
     }
   },
 
   /**
    * Get chart data (earnings and clicks over time)
+   * GET /api/affiliate/dashboard/chart-data
    */
-  async getChartData(timeframe: 'week' | 'month' | 'year' = 'month'): Promise<ChartDataPoint[]> {
+  async getChartData(timeframe: 'week' | 'month' | 'year' = 'month'): Promise<ChartResponse> {
     try {
-      const response = await fetch(`${API_URL}/api/affiliate/dashboard/chart-data?timeframe=${timeframe}`, {
+      console.log(`📈 Fetching chart data for timeframe: ${timeframe}`);
+
+      const chartData = await apiRequest<ChartResponse>({
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${typeof window !== 'undefined' ? localStorage.getItem('token') || '' : ''}`,
-        },
+        url: '/dashboard/chart-data',
+        params: { timeframe },
+        skipCache: false,
       });
 
-      if (!response.ok) {
-        throw new Error(`Failed to fetch chart data: ${response.status}`);
-      }
-
-      const result = await response.json();
-      return result.data;
+      console.log(`✅ Chart data received:`, chartData);
+      return chartData;
     } catch (error) {
-      console.error('Error fetching chart data:', error);
+      console.error(`❌ Error fetching chart data:`, error);
       throw error;
     }
   },
 
   /**
-   * Get recent earnings/commissions
+   * Get recent earnings
    */
-  async getRecentEarnings(limit: number = 10): Promise<RecentEarning[]> {
+  async getRecentEarnings(limit: number = 5): Promise<RecentEarning[]> {
     try {
-      const response = await fetch(`${API_URL}/api/affiliate/dashboard/recent-earnings?limit=${limit}`, {
+      console.log(`💰 Fetching recent earnings (limit: ${limit})...`);
+
+      const response = await apiRequest<RecentEarning[] | { data?: RecentEarning[] }>({
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${typeof window !== 'undefined' ? localStorage.getItem('token') || '' : ''}`,
-        },
+        url: `/dashboard/recent-earnings`,
+        params: { limit },
+        skipCache: true, // Don't cache earnings data
       });
 
-      if (!response.ok) {
-        throw new Error(`Failed to fetch recent earnings: ${response.status}`);
-      }
-
-      const result = await response.json();
-      return result.data;
+      const earnings = Array.isArray(response) ? response : (response as any)?.data || [];
+      console.log(`✅ Recent earnings received: ${earnings.length} records`);
+      return earnings;
     } catch (error) {
-      console.error('Error fetching recent earnings:', error);
+      console.error('❌ Error fetching recent earnings:', error);
       throw error;
     }
   },
 
   /**
-   * Get affiliate performance metrics
+   * Get monthly comparison data
    */
-  async getPerformanceMetrics(): Promise<{
-    averageOrderValue: number;
-    totalOrders: number;
-    uniqueCustomers: number;
-    repeatCustomerRate: number;
-    topProduct: { id: string; name: string; orders: number };
-  }> {
+  async getMonthlyComparison(): Promise<{ current: number; previous: number; growth: number }> {
     try {
-      const response = await fetch(`${API_URL}/api/affiliate/dashboard/performance`, {
+      console.log('📊 Fetching monthly comparison...');
+
+      const response = await apiRequest<{ current: number; previous: number; growth: number }>({
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${typeof window !== 'undefined' ? localStorage.getItem('token') || '' : ''}`,
-        },
+        url: `/dashboard/monthly-comparison`,
+        skipCache: false,
       });
 
-      if (!response.ok) {
-        throw new Error(`Failed to fetch performance metrics: ${response.status}`);
-      }
-
-      const result = await response.json();
-      return result.data;
+      console.log('✅ Monthly comparison received:', response);
+      return response || { current: 0, previous: 0, growth: 0 };
     } catch (error) {
-      console.error('Error fetching performance metrics:', error);
+      console.error('❌ Error fetching monthly comparison:', error);
       throw error;
     }
   },
 };
-
-export default affiliateStatsService;

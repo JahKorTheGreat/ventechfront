@@ -208,7 +208,8 @@ export const paymentService = {
       // Get API URL from environment or use default
       const API_URL = typeof window !== 'undefined' 
         ? (process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:5000')
-        : (process.env.API_URL || 'http://127.0.0.1:5000'); {
+        : (process.env.API_URL || 'http://127.0.0.1:5000');
+      const response = await fetch(`${API_URL}/api/payments/verify`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

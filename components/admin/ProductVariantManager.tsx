@@ -132,7 +132,7 @@ export function ProductVariantManager({ productId, onVariantChange }: ProductVar
 
       // Fetch options for each attribute
       const attrsWithOptions = await Promise.all(
-        (attrs || []).map(async (attr) => {
+        (attrs || []).map(async (attr: any) => {
           const { data: options, error: optError } = await supabase
             .from('product_attribute_options')
             .select('*')
@@ -207,7 +207,7 @@ export function ProductVariantManager({ productId, onVariantChange }: ProductVar
 
       setProductVariants(variantsWithOptions);
       // Expand all mapped attributes
-      setExpandedAttributes(variantsWithOptions.map(v => v.attribute_id));
+      setExpandedAttributes(variantsWithOptions.map((v: any) => v.attribute_id));
     } catch (error: any) {
       console.error('Error fetching product variants:', error);
       setProductVariants([]);

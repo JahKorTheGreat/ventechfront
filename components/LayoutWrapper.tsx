@@ -6,6 +6,7 @@ import { Footer } from '@/components/Footer';
 import { MobileBottomNav } from '@/components/navigation/MobileBottomNav';
 import React, { Suspense } from 'react';
 import CheckmarkLoader from '@/components/loaders/CheckmarkLoader';
+import AffiliateReferralInitializer from '@/components/AffiliateReferralInitializer';
 
 export function LayoutWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -20,6 +21,7 @@ export function LayoutWrapper({ children }: { children: React.ReactNode }) {
   // Regular routes: With NavBar, Footer, and MobileBottomNav
   return (
     <>
+      <AffiliateReferralInitializer />
       <NavBar />
       <main className="flex-1 pb-20 md:pb-0">
         <Suspense

@@ -15,14 +15,15 @@ interface LinksListProps {
   loading: boolean;
   onDelete: (linkId: string) => Promise<void>;
   onEdit: (linkId: string, name: string, source?: string) => Promise<void>;
-  onCopy: (url: string) => boolean;
+  onCopy: (url: string) => Promise<boolean>;
 }
 
 export default function LinksList({ links, loading, onDelete, onEdit, onCopy }: LinksListProps) {
+  const safeLinks = Array.isArray(links) ? links : [];
   const [selectedLinkForAnalytics, setSelectedLinkForAnalytics] = useState<ReferralLink | null>(null);
   const [selectedLinkForEdit, setSelectedLinkForEdit] = useState<ReferralLink | null>(null);
-  const handleCopy = (url: string) => {
-    const success = onCopy(url);
+  const handleCopy = async (url: string) => {
+    const success = await onCopy(url);
     if (success) {
       toast.success('Link copied to clipboard!');
     } else {
@@ -46,7 +47,7 @@ export default function LinksList({ links, loading, onDelete, onEdit, onCopy }: 
       <div className="bg-gray-50 rounded-lg shadow-md">
         {loading ? (
           <div className="p-8 text-center text-vt-text-secondary">Loading links...</div>
-        ) : links.length === 0 ? (
+        ) : safeLinks.length === 0 ? (
           <div className="p-8 text-center text-vt-text-secondary">
             <p>No referral links yet</p>
             <p className="text-sm mt-2">Create your first link to start tracking referrals</p>
@@ -65,62 +66,65 @@ export default function LinksList({ links, loading, onDelete, onEdit, onCopy }: 
                 </tr>
               </thead>
               <tbody>
-                {links.map((link) => (
-                  <tr key={link.id} className="border-b border-vt-border-subtle hover:bg-vt-bg-secondary transition-colors">
-                    <td className="px-6 py-4">
-                      <div>
-                        <p className="font-medium text-vt-text-primary">{link.name}</p>
-                        <p className="text-xs text-vt-text-secondary mt-1 truncate">{link.url}</p>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <p className="font-semibold text-vt-text-primary flex items-center space-x-2">
-                        <span>{link.clicks}</span>
-                      </p>
-                    </td>
-                    <td className="px-6 py-4">
-                      <p className="font-semibold text-vt-text-primary">{link.conversions}</p>
-                    </td>
-                    <td className="px-6 py-4">
-                      <p className="font-semibold text-green-600">${link.earnings.toFixed(2)}</p>
-                    </td>
-                    <td className="px-6 py-4">
-                      <p className="text-vt-text-secondary">{(link.conversionRate * 100).toFixed(2)}%</p>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex justify-end space-x-2">
-                        <button
-                          onClick={() => handleCopy(link.url)}
-                          className="p-2 text-vt-text-secondary hover:text-vt-primary hover:bg-vt-bg-secondary rounded transition-colors"
-                          title="Copy link"
-                        >
-                          <Copy className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => setSelectedLinkForEdit(link)}
-                          className="p-2 text-vt-text-secondary hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
-                          title="Edit link"
-                        >
-                          <Edit2 className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => setSelectedLinkForAnalytics(link)}
-                          className="p-2 text-vt-text-secondary hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
-                          title="View analytics"
-                        >
-                          <BarChart3 className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(link.id)}
-                          className="p-2 text-vt-text-secondary hover:text-red-500 hover:bg-red-50 rounded transition-colors"
-                          title="Delete link"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                {safeLinks.map((link) => {
+                  const linkData = link as any;
+                  return (
+                    <tr key={linkData.id} className="border-b border-vt-border-subtle hover:bg-vt-bg-secondary transition-colors">
+                      <td className="px-6 py-4">
+                        <div>
+                          <p className="font-medium text-vt-text-primary">{linkData.name}</p>
+                          <p className="text-xs text-vt-text-secondary mt-1 truncate">{linkData.generated_url || linkData.url}</p>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <p className="font-semibold text-vt-text-primary flex items-center space-x-2">
+                          <span>{linkData.clicks}</span>
+                        </p>
+                      </td>
+                      <td className="px-6 py-4">
+                        <p className="font-semibold text-vt-text-primary">{linkData.conversions}</p>
+                      </td>
+                      <td className="px-6 py-4">
+                        <p className="font-semibold text-green-600">${Number(linkData.earnings || 0).toFixed(2)}</p>
+                      </td>
+                      <td className="px-6 py-4">
+                        <p className="text-vt-text-secondary">{Number((linkData.conversionRate ?? 0) * 100).toFixed(2)}%</p>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex justify-end space-x-2">
+                          <button
+                            onClick={() => handleCopy(linkData.generated_url || linkData.url || '')}
+                            className="p-2 text-vt-text-secondary hover:text-vt-primary hover:bg-vt-bg-secondary rounded transition-colors"
+                            title="Copy link"
+                          >
+                            <Copy className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => setSelectedLinkForEdit(linkData)}
+                            className="p-2 text-vt-text-secondary hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                            title="Edit link"
+                          >
+                            <Edit2 className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => setSelectedLinkForAnalytics(linkData)}
+                            className="p-2 text-vt-text-secondary hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                            title="View analytics"
+                          >
+                            <BarChart3 className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(linkData.id)}
+                            className="p-2 text-vt-text-secondary hover:text-red-500 hover:bg-red-50 rounded transition-colors"
+                            title="Delete link"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

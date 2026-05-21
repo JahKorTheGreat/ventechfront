@@ -22,6 +22,7 @@ import {
   calculateEstimatedArrival,
   formatEstimatedDelivery 
 } from '@/services/preOrder.service';
+import AffiliateReferralTracker from '@/lib/affiliateReferralTracker';
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -323,6 +324,8 @@ export default function CheckoutPage() {
         notes,
         hasRegularItems,
         hasPreOrderItems,
+        // Include affiliate referral attribution
+        affiliate_referral_code: AffiliateReferralTracker.getReferralCode(),
         regularItems: hasRegularItems ? regularItems.map(item => ({
           id: item.id,
           product_id: item.id, // Explicitly set product_id for backend
@@ -466,6 +469,8 @@ export default function CheckoutPage() {
             delivery_fee: regularDeliveryFee,
             tax: 0,
             total: regularSubtotal + regularDeliveryFee - couponDiscount,
+            // Include affiliate referral attribution
+            affiliate_referral_code: AffiliateReferralTracker.getReferralCode(),
           };
 
           const regularOrder = await orderService.createOrder(regularCheckoutData, userId);
@@ -523,6 +528,8 @@ export default function CheckoutPage() {
             delivery_fee: preOrderDeliveryFee, // ✅ Include pre-order shipping fee
             tax: 0,
             total: preOrderSubtotal + preOrderDeliveryFee - couponDiscount, // ✅ Include shipping in total
+            // Include affiliate referral attribution
+            affiliate_referral_code: AffiliateReferralTracker.getReferralCode(),
           };
 
           const preOrder = await orderService.createOrder(preOrderCheckoutData, userId);

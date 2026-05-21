@@ -49,7 +49,7 @@ export default function WishlistInsightsPage() {
       if (error) throw error;
 
       // Fetch products separately for wishlist items
-      const productIds = [...new Set(data?.map(item => item.product_id).filter(Boolean) || [])];
+      const productIds = [...new Set(data?.map((item: any) => item.product_id).filter(Boolean) || [])];
       
       let productsMap: { [key: string]: any } = {};
       if (productIds.length > 0) {
@@ -59,7 +59,7 @@ export default function WishlistInsightsPage() {
           .in('id', productIds);
 
         if (productsError) throw productsError;
-        productsMap = productsData?.reduce((acc, p) => {
+        productsMap = productsData?.reduce((acc: any, p: any) => {
           acc[p.id] = p;
           return acc;
         }, {} as any) || {};

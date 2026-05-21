@@ -61,7 +61,7 @@ export default function CustomersAnalyticsPage() {
       if (customersError) throw customersError;
 
       const totalCustomers = allCustomers?.length || 0;
-      const newCustomers = allCustomers?.filter(c => new Date(c.created_at) >= startDate).length || 0;
+      const newCustomers = allCustomers?.filter((c: any) => new Date(c.created_at) >= startDate).length || 0;
 
       // Fetch orders with user info for top customers
       const { data: orders, error: ordersError } = await supabase
@@ -74,7 +74,7 @@ export default function CustomersAnalyticsPage() {
       // Calculate customer spending
       const customerSpending: { [key: string]: { name: string; orders: number; spent: number; since: string } } = {};
       
-      orders?.forEach(order => {
+      orders?.forEach((order: any) => {
         const userId = order.user_id;
         if (!userId) return;
 

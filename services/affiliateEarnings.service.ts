@@ -1,19 +1,23 @@
 // Affiliate Earnings Service
 // Handles commission tracking, earnings history, and earnings filters
+// Enhanced with production-ready features: validation, timeouts, retries, caching
 
-const API_URL = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:5000';
+import { apiRequest, validators } from '@/lib/affiliateApiClient';
+
+const API_BASE = '/earnings';
 
 export interface Earning {
   id: string;
-  orderId: string;
-  productId: string;
-  productName: string;
   amount: number;
-  commission: number;
-  commissionRate: number;
-  status: 'pending' | 'approved' | 'rejected' | 'paid';
   date: string;
-  paidDate?: string;
+  status: string;
+  productName?: string;
+  orderId?: string;
+  commission?: number;
+}
+
+export interface EarningsResponse {
+  earnings: Earning[];
 }
 
 export interface EarningsSummary {
@@ -38,34 +42,15 @@ export interface EarningsFilter {
 
 export const affiliateEarningsService = {
   /**
-   * Get earnings with optional filters
+   * Get earnings
+   * GET /api/affiliate/earnings
    */
-  async getEarnings(filters?: EarningsFilter): Promise<{ earnings: Earning[]; total: number; page: number; limit: number }> {
+  async getEarnings(): Promise<EarningsResponse> {
     try {
-      const params = new URLSearchParams();
-      
-      if (filters?.status) params.append('status', filters.status);
-      if (filters?.page) params.append('page', filters.page.toString());
-      if (filters?.limit) params.append('limit', filters.limit.toString());
-      if (filters?.startDate) params.append('startDate', filters.startDate);
-      if (filters?.endDate) params.append('endDate', filters.endDate);
-      if (filters?.sortBy) params.append('sortBy', filters.sortBy);
-      if (filters?.sortOrder) params.append('sortOrder', filters.sortOrder);
-
-      const response = await fetch(`${API_URL}/api/affiliate/earnings?${params.toString()}`, {
+      return await apiRequest<EarningsResponse>({
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${typeof window !== 'undefined' ? localStorage.getItem('token') || '' : ''}`,
-        },
+        url: API_BASE,
       });
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch earnings: ${response.status}`);
-      }
-
-      const result = await response.json();
-      return result.data;
     } catch (error) {
       console.error('Error fetching earnings:', error);
       throw error;
@@ -77,20 +62,10 @@ export const affiliateEarningsService = {
    */
   async getEarningsSummary(): Promise<EarningsSummary> {
     try {
-      const response = await fetch(`${API_URL}/api/affiliate/earnings/summary`, {
+      return await apiRequest({
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${typeof window !== 'undefined' ? localStorage.getItem('token') || '' : ''}`,
-        },
+        url: `${API_BASE}/summary`,
       });
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch earnings summary: ${response.status}`);
-      }
-
-      const result = await response.json();
-      return result.data;
     } catch (error) {
       console.error('Error fetching earnings summary:', error);
       throw error;
@@ -101,24 +76,20 @@ export const affiliateEarningsService = {
    * Get monthly earnings breakdown
    */
   async getMonthlyEarnings(year?: number): Promise<{ month: string; earnings: number; commissions: number }[]> {
-    try {
-      const params = new URLSearchParams();
-      if (year) params.append('year', year.toString());
-
-      const response = await fetch(`${API_URL}/api/affiliate/earnings/monthly?${params.toString()}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${typeof window !== 'undefined' ? localStorage.getItem('token') || '' : ''}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch monthly earnings: ${response.status}`);
+    // Input validation
+    if (year) {
+      const yearError = validators.number(year, 'year', 2000, new Date().getFullYear() + 10);
+      if (yearError) {
+        throw new Error(yearError.message);
       }
+    }
 
-      const result = await response.json();
-      return result.data;
+    try {
+      return await apiRequest({
+        method: 'GET',
+        url: `${API_BASE}/monthly`,
+        params: year ? { year: year.toString() } : undefined,
+      });
     } catch (error) {
       console.error('Error fetching monthly earnings:', error);
       throw error;
@@ -130,20 +101,10 @@ export const affiliateEarningsService = {
    */
   async getEarningsByTier(): Promise<{ tier: string; rate: number; totalEarnings: number; totalOrders: number }[]> {
     try {
-      const response = await fetch(`${API_URL}/api/affiliate/earnings/by-tier`, {
+      return await apiRequest({
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${typeof window !== 'undefined' ? localStorage.getItem('token') || '' : ''}`,
-        },
+        url: `${API_BASE}/by-tier`,
       });
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch earnings by tier: ${response.status}`);
-      }
-
-      const result = await response.json();
-      return result.data;
     } catch (error) {
       console.error('Error fetching earnings by tier:', error);
       throw error;
@@ -154,31 +115,50 @@ export const affiliateEarningsService = {
    * Export earnings as CSV
    */
   async exportEarnings(filters?: EarningsFilter): Promise<Blob> {
-    try {
-      const params = new URLSearchParams();
-      params.append('export', 'csv');
-      
-      if (filters?.status) params.append('status', filters.status);
-      if (filters?.startDate) params.append('startDate', filters.startDate);
-      if (filters?.endDate) params.append('endDate', filters.endDate);
-
-      const response = await fetch(`${API_URL}/api/affiliate/earnings/export?${params.toString()}`, {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${typeof window !== 'undefined' ? localStorage.getItem('token') || '' : ''}`,
-        },
+    if (filters) {
+      const validationErrors = validators.validateObject(filters, {
+        status: (value) => value ? validators.oneOf(value, 'status', ['pending', 'approved', 'rejected', 'paid', 'all']) : null,
+        startDate: (value) => value ? validators.string(value, 'startDate') : null,
+        endDate: (value) => value ? validators.string(value, 'endDate') : null,
       });
 
-      if (!response.ok) {
-        throw new Error(`Failed to export earnings: ${response.status}`);
+      if (validationErrors.length > 0) {
+        throw new Error(`Validation errors: ${validationErrors.map(e => e.message).join(', ')}`);
       }
+    }
 
-      return await response.blob();
+    try {
+      const params: Record<string, string> = {};
+      if (filters?.status) params.status = filters.status;
+      if (filters?.startDate) params.startDate = filters.startDate;
+      if (filters?.endDate) params.endDate = filters.endDate;
+
+      const response = await apiRequest<EarningsResponse>({
+        method: 'GET',
+        url: API_BASE,
+        params,
+        skipCache: true,
+      });
+
+      const earnings = response.earnings ?? [];
+      const header = ['Product', 'Order ID', 'Amount', 'Commission', 'Status', 'Date'];
+      const rows = earnings.map((earning) => [
+        earning.productName || '',
+        earning.orderId || '',
+        (earning.amount ?? 0).toFixed(2),
+        (earning.commission ?? 0).toFixed(2),
+        earning.status || '',
+        earning.date ? new Date(earning.date).toISOString() : '',
+      ]);
+
+      const csv = [header, ...rows].map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n');
+
+      return new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     } catch (error) {
       console.error('Error exporting earnings:', error);
       throw error;
     }
-  },
+  }
 };
 
 export default affiliateEarningsService;

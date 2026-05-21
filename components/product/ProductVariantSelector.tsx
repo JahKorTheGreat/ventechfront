@@ -82,7 +82,7 @@ export function ProductVariantSelector({
         return;
       }
 
-      const attributeIds = attributeMappings.map(m => m.attribute_id);
+      const attributeIds = attributeMappings.map((m: any) => m.attribute_id);
 
       // Get selected options for this product
       const { data: selectedOptions, error: selectedOptionsError } = await supabase
@@ -142,12 +142,12 @@ export function ProductVariantSelector({
           }
 
           // Debug: Log fetched options
-          console.log(`Fetched ${options.length} options for attribute ${attr.name}:`, options.map(o => o.label || o.value));
+          console.log(`Fetched ${options.length} options for attribute ${attr.name}:`, options.map((o: any) => o.label || o.value));
 
           let finalOptions = options || [];
 
           // Find if there's a base option (price_modifier = 0)
-          const hasBaseOption = finalOptions.some(opt => opt.price_modifier === 0);
+          const hasBaseOption = finalOptions.some((opt: any) => opt.price_modifier === 0);
 
           // If no base option exists, create a "Default" option
           if (!hasBaseOption && finalOptions.length > 0) {
@@ -163,7 +163,7 @@ export function ProductVariantSelector({
             finalOptions = [defaultOption, ...finalOptions];
           }
 
-          const mapping = attributeMappings.find(m => m.attribute_id === attr.id);
+          const mapping = attributeMappings.find((m: any) => m.attribute_id === attr.id);
           
           return {
             ...attr,
@@ -173,13 +173,13 @@ export function ProductVariantSelector({
         })
       );
 
-      const validAttributes = attributesWithOptions.filter((attr): attr is ProductAttribute => attr !== null);
+      const validAttributes = attributesWithOptions.filter((attr: ProductAttribute | null): attr is ProductAttribute => attr !== null);
       setAttributes(validAttributes);
 
       // Initialize with base options selected (price_modifier = 0)
       const initialSelections = new Map<string, VariantOption>();
-      validAttributes.forEach((attr) => {
-        const baseOption = attr.options.find(opt => opt.price_modifier === 0);
+      validAttributes.forEach((attr: ProductAttribute) => {
+        const baseOption = attr.options.find((opt: any) => opt.price_modifier === 0);
         if (baseOption) {
           initialSelections.set(attr.id, baseOption);
         } else if (attr.options.length > 0) {

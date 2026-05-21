@@ -22,28 +22,28 @@ export default function StatsCards({ stats, loading }: StatsCardsProps) {
       format: 'currency',
     },
     {
-      label: 'Monthly Earnings',
-      value: stats?.monthlyEarnings || 0,
+      label: 'Total Clicks',
+      value: stats?.totalClicks || 0,
       icon: Users,
       color: 'text-blue-500',
       bgColor: 'bg-blue-50',
-      format: 'currency',
+      format: 'number',
     },
     {
-      label: 'Active Links',
-      value: stats?.activeLinks || 0,
+      label: 'Conversions',
+      value: stats?.totalConversions || 0,
       icon: Target,
       color: 'text-purple-500',
       bgColor: 'bg-purple-50',
       format: 'number',
     },
     {
-      label: 'Tier Status',
-      value: stats?.tier || 'Starter',
+      label: 'Referrals',
+      value: stats?.totalReferrals || 0,
       icon: Award,
       color: 'text-yellow-500',
       bgColor: 'bg-yellow-50',
-      format: 'text',
+      format: 'number',
     },
   ];
 
@@ -62,20 +62,20 @@ export default function StatsCards({ stats, loading }: StatsCardsProps) {
       {cards.map((card, idx) => {
         const Icon = card.icon;
         return (
-          <div key={idx} className="bg-gray-50 rounded-lg shadow-md p-4 sm:p-6 hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex-1 min-w-0">
-                <p className="text-vt-text-secondary text-xs sm:text-sm font-medium">{card.label}</p>
-                <p className="text-lg sm:text-2xl font-bold text-vt-text-primary mt-2 truncate min-h-7">
+          <div key={idx} className="min-h-[150px] rounded-3xl border border-slate-200 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
+            <div className="flex items-start justify-between gap-4">
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium uppercase tracking-[0.08em] text-slate-500">{card.label}</p>
+                <p className="mt-4 text-2xl font-bold text-slate-900 truncate">
                   {loading ? (
-                    <span className="inline-block w-16 h-6 bg-gray-200 rounded animate-pulse"></span>
+                    <span className="inline-block h-10 w-28 rounded-2xl bg-slate-200 animate-pulse" />
                   ) : (
                     formatValue(card.value, card.format)
                   )}
                 </p>
               </div>
-              <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-lg ${card.bgColor} flex items-center justify-center flex-shrink-0`}>
-                <Icon className={`w-5 h-5 sm:w-6 sm:h-6 ${card.color}`} />
+              <div className={`flex h-12 w-12 items-center justify-center rounded-3xl ${card.bgColor}`}>
+                <Icon className={`h-6 w-6 ${card.color}`} />
               </div>
             </div>
           </div>

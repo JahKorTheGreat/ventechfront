@@ -161,7 +161,7 @@ export default function AdminOrdersPage() {
 
       if (error) throw error;
 
-      let formattedOrders = data?.map(order => {
+      let formattedOrders = data?.map((order: any) => {
         // Extract is_pre_order from shipping_address if it exists there
         const isPreOrder = order.is_pre_order || order.shipping_address?.is_pre_order || false;
         
@@ -193,7 +193,7 @@ export default function AdminOrdersPage() {
       // Apply search filter client-side
       if (searchQuery) {
         const searchLower = searchQuery.toLowerCase();
-        formattedOrders = formattedOrders.filter(order =>
+        formattedOrders = formattedOrders.filter((order: any) =>
           order.order_number.toLowerCase().includes(searchLower) ||
           order.id.toLowerCase().includes(searchLower) ||
           order.user_name.toLowerCase().includes(searchLower) ||

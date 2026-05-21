@@ -4,6 +4,7 @@
 'use client';
 
 import { useAffiliatePayouts } from '@/hooks/useAffiliate';
+import { useAppSelector } from '@/store';
 import { DollarSign, TrendingUp, Calendar } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
@@ -13,12 +14,17 @@ interface PayoutSummaryCardProps {
 
 export default function PayoutSummaryCard({ loading }: PayoutSummaryCardProps) {
   const { getPayoutSummary } = useAffiliatePayouts();
+  const { isAuthenticated } = useAppSelector((state) => state.auth);
   const [summary, setSummary] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(loading);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchSummary = async () => {
+      if (!isAuthenticated) {
+        return;
+      }
+
       try {
         setIsLoading(true);
         setError(null);
@@ -28,7 +34,6 @@ export default function PayoutSummaryCard({ loading }: PayoutSummaryCardProps) {
         }
       } catch (err) {
         console.error('Error fetching payout summary:', err);
-        // Set fallback values when there's an error
         setSummary({
           totalPaid: 0,
           pendingPayouts: 0,
@@ -42,7 +47,7 @@ export default function PayoutSummaryCard({ loading }: PayoutSummaryCardProps) {
     };
 
     fetchSummary();
-  }, [getPayoutSummary]);
+  }, [getPayoutSummary, isAuthenticated]);
 
   const cards = [
     {

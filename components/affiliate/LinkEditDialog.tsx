@@ -22,8 +22,9 @@ export default function LinkEditDialog({ isOpen, onClose, link, onEdit }: LinkEd
 
   useEffect(() => {
     if (link) {
-      setLinkName(link.name);
-      setSource(link.source || '');
+      const linkData = link as any;
+      setLinkName(linkData.name || '');
+      setSource(linkData.source || '');
     }
   }, [link, isOpen]);
 
@@ -37,9 +38,11 @@ export default function LinkEditDialog({ isOpen, onClose, link, onEdit }: LinkEd
 
     if (!link) return;
 
+    const linkData = link as any;
+
     setLoading(true);
     try {
-      await onEdit(link.id, linkName, source || undefined);
+      await onEdit(linkData.id, linkName, source || undefined);
       toast.success('Link updated successfully');
       onClose();
     } catch (error) {

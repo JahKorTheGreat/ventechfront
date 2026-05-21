@@ -8,7 +8,8 @@ import { useAffiliateEarnings } from '@/hooks/useAffiliate';
 export default function RecentEarnings() {
   const { earnings, loading } = useAffiliateEarnings();
 
-  const recentItems = earnings.slice(0, 5);
+  const safeEarnings = Array.isArray(earnings) ? earnings : [];
+  const recentItems = safeEarnings.slice(0, 5);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -26,9 +27,9 @@ export default function RecentEarnings() {
   };
 
   return (
-    <div className="bg-gray-50 rounded-lg shadow-md p-4 sm:p-6">
-      <h3 className="text-base sm:text-lg font-bold text-vt-text-primary mb-2">Recent Earnings</h3>
-      <p className="text-vt-text-secondary text-xs sm:text-sm mb-6">Latest commission activity</p>
+    <div className="rounded-3xl border border-slate-200 bg-white p-4 sm:p-6 shadow-sm">
+      <h3 className="text-base sm:text-lg font-semibold text-slate-900 mb-2">Recent Earnings</h3>
+      <p className="text-sm text-slate-500 mb-6">Latest commission activity</p>
 
       {loading ? (
         <div className="space-y-3">
@@ -47,15 +48,15 @@ export default function RecentEarnings() {
           {recentItems.map((earning) => (
             <div key={earning.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between py-3 pb-3 last:pb-0 gap-2 sm:gap-3">
               <div className="flex-1 min-w-0">
-                <p className="font-medium text-vt-text-primary text-xs sm:text-sm truncate">{earning.productName}</p>
-                <p className="text-xs text-vt-text-secondary">{earning.date}</p>
+                <p className="font-medium text-vt-text-primary text-xs sm:text-sm truncate">{earning.productName || 'Unnamed product'}</p>
+                <p className="text-xs text-vt-text-secondary">{earning.date || 'Unknown date'}</p>
               </div>
               <div className="flex items-center space-x-2 sm:space-x-3 flex-shrink-0">
-                <p className="font-bold text-vt-text-primary text-sm">${earning.commission.toFixed(2)}</p>
+                <p className="font-bold text-vt-text-primary text-sm">${Number(earning.commission || 0).toFixed(2)}</p>
                 <span
                   className={`px-2 py-1 rounded text-xs font-medium capitalize whitespace-nowrap ${getStatusColor(earning.status)}`}
                 >
-                  {earning.status}
+                  {earning.status || 'unknown'}
                 </span>
               </div>
             </div>

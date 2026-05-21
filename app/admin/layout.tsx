@@ -124,7 +124,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       // Double-check: Wait a bit more if user is still null but we're not loading
       if (!user && !isLoading) {
         // Check session directly from Supabase as a fallback
-        supabase.auth.getSession().then(({ data: { session } }) => {
+        supabase.auth.getSession().then(({ data: { session } }: any) => {
           if (!session) {
             // No session - redirect to login
             if (pathname !== '/login' && pathname !== '/register') {

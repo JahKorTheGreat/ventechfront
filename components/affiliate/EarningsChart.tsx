@@ -13,9 +13,26 @@ interface EarningsChartProps {
 }
 
 export default function EarningsChart({ data, loading, timeframe, onTimeframeChange }: EarningsChartProps) {
+  const safeData: ChartDataPoint[] = Array.isArray(data) ? data : [];
+
+  const defaultPoints: ChartDataPoint[] = [
+    { date: 'D1', earnings: 0, clicks: 0 },
+    { date: 'D2', earnings: 0, clicks: 0 },
+    { date: 'D3', earnings: 0, clicks: 0 },
+    { date: 'D4', earnings: 0, clicks: 0 },
+    { date: 'D5', earnings: 0, clicks: 0 },
+    { date: 'D6', earnings: 0, clicks: 0 },
+    { date: 'D7', earnings: 0, clicks: 0 },
+    { date: 'D8', earnings: 0, clicks: 0 },
+    { date: 'D9', earnings: 0, clicks: 0 },
+    { date: 'D10', earnings: 0, clicks: 0 },
+    { date: 'D11', earnings: 0, clicks: 0 },
+    { date: 'D12', earnings: 0, clicks: 0 },
+  ];
+
   const getMaxValue = () => {
-    if (!data || data.length === 0) return 100;
-    return Math.max(...data.map((d) => Math.max(d.earnings, d.clicks)));
+    if (safeData.length === 0) return 100;
+    return Math.max(...safeData.map((d) => Math.max(Number(d.earnings || 0), Number(d.clicks || 0))));
   };
 
   const maxValue = getMaxValue();
@@ -81,25 +98,9 @@ export default function EarningsChart({ data, loading, timeframe, onTimeframeCha
             {/* Chart with data or empty state visualization */}
             <div className="flex items-end justify-between h-full space-x-1 sm:space-x-2 px-2">
               {/* Generate 12 bars - either from data or from empty state */}
-              {(data && data.length > 0
-                ? data.slice(-12)
-                : [
-                    { date: 'D1', earnings: 0, clicks: 0 },
-                    { date: 'D2', earnings: 0, clicks: 0 },
-                    { date: 'D3', earnings: 0, clicks: 0 },
-                    { date: 'D4', earnings: 0, clicks: 0 },
-                    { date: 'D5', earnings: 0, clicks: 0 },
-                    { date: 'D6', earnings: 0, clicks: 0 },
-                    { date: 'D7', earnings: 0, clicks: 0 },
-                    { date: 'D8', earnings: 0, clicks: 0 },
-                    { date: 'D9', earnings: 0, clicks: 0 },
-                    { date: 'D10', earnings: 0, clicks: 0 },
-                    { date: 'D11', earnings: 0, clicks: 0 },
-                    { date: 'D12', earnings: 0, clicks: 0 },
-                  ]
-              ).map((point, idx) => {
-                const earningsHeight = data && data.length > 0 ? (point.earnings / maxValue) * 100 : 0;
-                const clicksHeight = data && data.length > 0 ? (point.clicks / maxValue) * 100 : 0;
+              {(safeData.length > 0 ? safeData.slice(-12) : defaultPoints).map((point, idx) => {
+                const earningsHeight = (Number(point.earnings || 0) / maxValue) * 100;
+                const clicksHeight = (Number(point.clicks || 0) / maxValue) * 100;
 
                 return (
                   <div key={idx} className="flex-1 flex flex-col items-center space-y-1 min-w-0">
@@ -133,7 +134,7 @@ export default function EarningsChart({ data, loading, timeframe, onTimeframeCha
       </div>
 
       {/* Empty State Message */}
-      {!loading && (!data || data.length === 0) && (
+      {!loading && safeData.length === 0 && (
         <div className="mt-6 p-6 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg border border-blue-200 text-center">
           <div className="text-3xl mb-3">📊</div>
           <p className="text-vt-text-primary text-base font-semibold">No earnings data yet</p>

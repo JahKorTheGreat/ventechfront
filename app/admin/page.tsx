@@ -88,18 +88,18 @@ export default function AdminDashboard() {
         // Continue with empty array - don't break the whole dashboard
       }
 
-      const totalRevenue = paidOrders?.reduce((sum, order) => sum + (parseFloat(order.total) || 0), 0) || 0;
+      const totalRevenue = paidOrders?.reduce((sum: number, order: any) => sum + (parseFloat(order.total) || 0), 0) || 0;
       
       // Calculate current month vs last month revenue
-      const currentMonthRevenue = paidOrders?.filter(order => {
+      const currentMonthRevenue = paidOrders?.filter((order: any) => {
         const orderDate = new Date(order.created_at);
         return orderDate >= currentMonthStart;
-      }).reduce((sum, order) => sum + (parseFloat(order.total) || 0), 0) || 0;
+      }).reduce((sum: number, order: any) => sum + (parseFloat(order.total) || 0), 0) || 0;
 
-      const lastMonthRevenue = paidOrders?.filter(order => {
+      const lastMonthRevenue = paidOrders?.filter((order: any) => {
         const orderDate = new Date(order.created_at);
         return orderDate >= lastMonthStart && orderDate <= lastMonthEnd;
-      }).reduce((sum, order) => sum + (parseFloat(order.total) || 0), 0) || 0;
+      }).reduce((sum: number, order: any) => sum + (parseFloat(order.total) || 0), 0) || 0;
 
       const revenueChange = lastMonthRevenue > 0 
         ? ((currentMonthRevenue - lastMonthRevenue) / lastMonthRevenue) * 100 
@@ -115,12 +115,12 @@ export default function AdminDashboard() {
         // Continue with empty array - don't break the whole dashboard
       }
 
-      const currentMonthOrders = allOrders?.filter(order => {
+      const currentMonthOrders = allOrders?.filter((order: any) => {
         const orderDate = new Date(order.created_at);
         return orderDate >= currentMonthStart;
       }).length || 0;
 
-      const lastMonthOrders = allOrders?.filter(order => {
+      const lastMonthOrders = allOrders?.filter((order: any) => {
         const orderDate = new Date(order.created_at);
         return orderDate >= lastMonthStart && orderDate <= lastMonthEnd;
       }).length || 0;
@@ -260,7 +260,7 @@ export default function AdminDashboard() {
         setRecentTransactions([]);
       } else {
         // Fetch user names separately if needed
-        const userIds = [...new Set((recentOrders || []).map(o => o.user_id).filter(Boolean))];
+        const userIds = [...new Set((recentOrders || []).map((o: any) => o.user_id).filter(Boolean))];
         let usersMap: { [key: string]: any } = {};
         
         if (userIds.length > 0) {
@@ -270,14 +270,14 @@ export default function AdminDashboard() {
             .in('id', userIds);
           
           if (!usersError && users) {
-            usersMap = users.reduce((acc, u) => {
+            usersMap = users.reduce((acc: any, u: any) => {
               acc[u.id] = u;
               return acc;
             }, {} as any);
           }
         }
 
-      const formattedTransactions: RecentTransaction[] = (recentOrders || []).map(order => {
+      const formattedTransactions: RecentTransaction[] = (recentOrders || []).map((order: any) => {
           const user = usersMap[order.user_id] || null;
           const userName = user 
             ? `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Unknown'
@@ -419,7 +419,7 @@ export default function AdminDashboard() {
         .select('user_id', { count: 'exact' });
 
         if (!wishlistError && wishlistData) {
-          uniqueWishlistUsers = new Set(wishlistData.map(w => w.user_id).filter(Boolean)).size;
+          uniqueWishlistUsers = new Set(wishlistData.map((w: any) => w.user_id).filter(Boolean)).size;
         }
       } catch (error) {
         console.error('Error fetching wishlist users:', error);

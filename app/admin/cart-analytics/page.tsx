@@ -57,7 +57,7 @@ export default function CartAnalyticsPage() {
 
       if (ordersError) throw ordersError;
 
-      const formattedCarts: AbandonedCart[] = (abandonedOrders || []).map(order => {
+      const formattedCarts: AbandonedCart[] = (abandonedOrders || []).map((order: any) => {
         const user = order.user as any;
         const userName = user 
           ? (user.full_name || `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Unknown')

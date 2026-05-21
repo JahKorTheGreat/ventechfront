@@ -1,33 +1,51 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
-
-// Use dummy values during build if env vars are missing (for static generation)
-const buildSafeUrl = supabaseUrl || 'https://placeholder.supabase.co';
-const buildSafeKey = supabaseAnonKey || 'placeholder-key';
-
-if (!supabaseUrl || !supabaseAnonKey) {
-  if (typeof window !== 'undefined') {
-    console.warn('Supabase credentials not found. Please add them to .env.local');
+declare global {
+  interface Window {
+    __SUPABASE_CLIENT__?: ReturnType<typeof createClient>;
   }
 }
 
-export const supabase = createClient(buildSafeUrl, buildSafeKey, {
-  auth: {
-    persistSession: true,
-    autoRefreshToken: true,
-    detectSessionInUrl: true,
-  },
-});
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-// Create an anonymous client for public data (no auth token)
-export const supabasePublic = createClient(buildSafeUrl, buildSafeKey, {
-  auth: {
-    persistSession: false,
-    autoRefreshToken: false,
-  },
-});
+if (!supabaseUrl || !supabaseAnonKey) {
+  throw new Error('Missing Supabase environment variables: NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are required');
+}
+
+export const supabase = typeof window !== 'undefined'
+  ? window.__SUPABASE_CLIENT__ ??= createClient(supabaseUrl, supabaseAnonKey, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+      },
+    })
+  : createClient(supabaseUrl, supabaseAnonKey, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+      },
+    });
+
+// Reuse the same Supabase client for public access to avoid multiple GoTrueClient instances.
+export const supabasePublic = supabase;
+
+export const getSupabaseAccessToken = async (): Promise<string | null> => {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+
+  const { data: { session }, error } = await supabase.auth.getSession();
+
+  if (error) {
+    console.error('Error getting Supabase access token:', error.message || error);
+    return null;
+  }
+
+  return session?.access_token ?? null;
+};
 
 // Helper function to get the current user
 export const getCurrentUser = async () => {
@@ -61,5 +79,25 @@ export const isAdmin = async () => {
   }
 
   return data?.role === 'admin';
+};
+
+// Server-side Supabase client for API routes
+export const getSupabaseServerClient = (cookies: any) => {
+  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!supabaseServiceKey) {
+    throw new Error('SUPABASE_SERVICE_ROLE_KEY is required for server-side operations');
+  }
+
+  return createClient(supabaseUrl, supabaseServiceKey, {
+    auth: {
+      persistSession: false,
+    },
+    global: {
+      headers: {
+        cookie: cookies.toString(),
+      },
+    },
+  });
 };
 

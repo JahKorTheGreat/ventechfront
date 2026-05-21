@@ -42,6 +42,8 @@ export default function LinkAnalyticsModal({ isOpen, onClose, link }: LinkAnalyt
 
   if (!isOpen) return null;
 
+  const linkData = link as any;
+  const linkStatus = linkData.status || 'active';
   const displayStats = stats || link;
 
   return (
@@ -50,8 +52,10 @@ export default function LinkAnalyticsModal({ isOpen, onClose, link }: LinkAnalyt
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <div>
-            <h2 className="text-xl font-bold text-gray-900">{link.name}</h2>
-            <p className="text-sm text-gray-500 mt-1 truncate">{link.url}</p>
+            <h2 className="text-xl font-bold text-gray-900">
+              {linkData.generated_url || linkData.link || linkData.url || linkData.code || linkData.referral_code || 'Referral Link'}
+            </h2>
+            <p className="text-sm text-gray-500 mt-1 truncate">{linkData.generated_url || linkData.url || linkData.link || 'No URL available'}</p>
           </div>
           <button
             onClick={onClose}
@@ -69,13 +73,58 @@ export default function LinkAnalyticsModal({ isOpen, onClose, link }: LinkAnalyt
               <p className="text-gray-500 mt-3">Loading analytics...</p>
             </div>
           ) : error ? (
-            <div className="text-center py-8">
-              <p className="text-red-600">{error}</p>
+            <div className="space-y-6">
+              {/* Error Notice */}
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                <p className="text-sm text-yellow-800">
+                  <strong>⚠️ Analytics Unavailable</strong><br/>
+                  Detailed analytics could not be loaded at this time. Basic link information is shown below.
+                </p>
+              </div>
+
+              {/* Show link details even on error */}
+              <div className="bg-gray-50 rounded-lg p-4 space-y-3">
+                <h3 className="font-semibold text-gray-900">Link Details</h3>
+                <div>
+                  <label className="text-xs font-medium text-gray-600">Link Code</label>
+                  <p className="text-sm text-gray-900 font-mono mt-1">{link.code}</p>
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-gray-600">Status</label>
+                  <div className="mt-1">
+                    <span className={`inline-block px-2 py-1 rounded text-xs font-medium ${
+                      linkStatus === 'active'
+                        ? 'bg-green-100 text-green-800'
+                        : 'bg-gray-200 text-gray-800'
+                    }`}>
+                      {linkStatus.charAt(0).toUpperCase() + linkStatus.slice(1)}
+                    </span>
+                  </div>
+                </div>
+                {linkData.source && (
+                  <div>
+                    <label className="text-xs font-medium text-gray-600">Traffic Source</label>
+                    <p className="text-sm text-gray-900 mt-1">{linkData.source}</p>
+                  </div>
+                )}
+                <div>
+                  <label className="text-xs font-medium text-gray-600">Created</label>
+                  <p className="text-sm text-gray-900 mt-1">
+                    {new Date(linkData.createdAt).toLocaleDateString('en-US', {
+                      year: 'numeric',
+                      month: 'short',
+                      day: 'numeric',
+                    })}
+                  </p>
+                </div>
+              </div>
+
+              {/* Retry Button */}
               <button
                 onClick={fetchStats}
-                className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
+                className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
               >
-                Try Again
+                Retry Loading Analytics
               </button>
             </div>
           ) : (
@@ -102,7 +151,7 @@ export default function LinkAnalyticsModal({ isOpen, onClose, link }: LinkAnalyt
 
                 {/* Conversion Rate */}
                 <div className="bg-orange-50 rounded-lg p-4">
-                  <div className="text-3xl font-bold text-orange-600">{(displayStats.conversionRate * 100).toFixed(2)}%</div>
+                  <div className="text-3xl font-bold text-orange-600">{(((stats?.conversionRate ?? ((link.clicks ? (link.conversions || 0) / link.clicks : 0))) * 100)).toFixed(2)}%</div>
                   <p className="text-sm text-gray-600 mt-1">Conv. Rate</p>
                 </div>
               </div>
@@ -118,24 +167,24 @@ export default function LinkAnalyticsModal({ isOpen, onClose, link }: LinkAnalyt
                   <label className="text-xs font-medium text-gray-600">Status</label>
                   <div className="mt-1">
                     <span className={`inline-block px-2 py-1 rounded text-xs font-medium ${
-                      link.status === 'active'
+                      linkStatus === 'active'
                         ? 'bg-green-100 text-green-800'
                         : 'bg-gray-200 text-gray-800'
                     }`}>
-                      {link.status.charAt(0).toUpperCase() + link.status.slice(1)}
+                      {linkStatus.charAt(0).toUpperCase() + linkStatus.slice(1)}
                     </span>
                   </div>
                 </div>
-                {link.source && (
+                {linkData.source && (
                   <div>
                     <label className="text-xs font-medium text-gray-600">Traffic Source</label>
-                    <p className="text-sm text-gray-900 mt-1">{link.source}</p>
+                    <p className="text-sm text-gray-900 mt-1">{linkData.source}</p>
                   </div>
                 )}
                 <div>
                   <label className="text-xs font-medium text-gray-600">Created</label>
                   <p className="text-sm text-gray-900 mt-1">
-                    {new Date(link.createdAt).toLocaleDateString('en-US', {
+                    {new Date(linkData.createdAt).toLocaleDateString('en-US', {
                       year: 'numeric',
                       month: 'short',
                       day: 'numeric',

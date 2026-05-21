@@ -33,67 +33,64 @@ export default function DashboardHeader({ user }: DashboardHeaderProps) {
   const pathname = usePathname();
 
   return (
-    <header className="bg-gray-50 shadow-md border-b border-gray-200">
-      {/* Top Bar */}
-      <div className="h-16 flex items-center justify-between px-4 sm:px-6 lg:px-8">
-        {/* Left side - Logo and Mobile menu toggle */}
-        <div className="flex items-center space-x-3 sm:space-x-4">
-          {/* Mobile Menu Toggle */}
+    <header className="sticky top-0 z-30 bg-white border-b border-slate-200 shadow-sm">
+      <div className="mx-auto flex h-16 items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center gap-3">
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="lg:hidden text-vt-text-secondary hover:text-vt-text-primary transition-colors"
-            title="Menu"
+            className="lg:hidden inline-flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 hover:border-orange-300 hover:text-orange-600 transition"
+            title="Open menu"
           >
-            {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
 
-          {/* Logo - Hidden on mobile, shown on tablet and up */}
-          <Link href="/affiliate/dashboard" className="hidden sm:flex items-center">
+          <Link href="/affiliate/dashboard" className="flex items-center gap-3">
             <Image
-              src="/logo/ventech_logo-black.png"
-              alt="Ventech Logo"
+              src="/logo/ventech_logo_1.png"
+              alt="Ventech logo"
               width={120}
               height={40}
-              className="h-10 w-auto"
+              className="h-10 w-auto object-contain"
+              style={{ maxHeight: '40px', width: 'auto', height: 'auto' }}
               priority
+              loading="eager"
             />
           </Link>
         </div>
 
-        {/* Right side - Notifications, User, and Home with spacing */}
-        <div className="flex items-center space-x-2 sm:space-x-4 md:space-x-6 lg:space-x-8 pr-2 lg:pr-4">
-          {/* Notifications */}
-          <button className="relative text-vt-text-secondary hover:text-vt-text-primary transition-colors p-2 hover:bg-gray-100 rounded-lg" title="Notifications">
+        <div className="flex items-center gap-3">
+          <button
+            className="relative inline-flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 hover:border-orange-300 hover:text-orange-600 transition"
+            title="Notifications"
+          >
             <Bell className="w-5 h-5" />
-            <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+            <span className="sr-only">Notifications</span>
+            <span className="absolute right-2 top-2 inline-flex h-2 w-2 rounded-full bg-rose-500" />
           </button>
 
-          {/* User Profile - Responsive */}
-          <div className="hidden sm:flex items-center space-x-2 md:space-x-3 pl-2 sm:pl-3 md:pl-4 border-l border-gray-300">
-            <div className="text-right hidden md:block">
-              <p className="text-xs md:text-sm font-medium text-vt-text-primary">{user?.full_name || 'User'}</p>
-              <p className="text-xs text-vt-text-secondary hidden lg:block">{user?.email}</p>
+          <div className="hidden md:flex items-center gap-3 rounded-full border border-slate-200 bg-slate-50 px-3 py-2">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-orange-500 text-sm font-semibold text-white">
+              {user?.full_name ? user.full_name[0].toUpperCase() : <User className="w-5 h-5" />}
             </div>
-            <div className="w-8 h-8 md:w-9 md:h-9 bg-vt-primary rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
-              {user?.full_name ? user.full_name[0].toUpperCase() : <User className="w-4 h-4" />}
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-slate-900 truncate">{user?.full_name || 'Affiliate'}</p>
+              <p className="text-xs text-slate-500 truncate">{user?.email || 'Welcome back'}</p>
             </div>
           </div>
 
-          {/* Home Button - Only visible on larger screens with spacing */}
           <Link
             href="/"
-            className="hidden md:inline-flex items-center space-x-2 px-4 py-2 rounded-lg bg-gradient-to-r from-orange-500 to-orange-600 text-white hover:from-orange-600 hover:to-orange-700 transition-all font-medium text-sm ml-2 lg:ml-4"
-            title="Back to Home"
+            className="inline-flex h-11 items-center justify-center rounded-xl border border-slate-200 bg-white px-3 text-slate-700 hover:border-orange-300 hover:bg-orange-50 hover:text-orange-600 transition"
+            title="Home"
           >
             <Home className="w-5 h-5" />
-            <span>Home</span>
+            <span className="sr-only">Back to Home</span>
           </Link>
         </div>
       </div>
 
-      {/* Mobile Navigation Menu */}
       {isMobileMenuOpen && (
-        <nav className="lg:hidden border-t border-gray-200 bg-white p-4 space-y-2">
+        <nav className="lg:hidden border-t border-slate-200 bg-white px-4 py-4">
           {navItems.map((item) => {
             const isActive = pathname === item.href;
             return (
@@ -101,27 +98,16 @@ export default function DashboardHeader({ user }: DashboardHeaderProps) {
                 key={item.href}
                 href={item.href}
                 onClick={() => setIsMobileMenuOpen(false)}
-                className={`block px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                className={`block rounded-2xl px-4 py-3 text-sm font-medium transition ${
                   isActive
-                    ? 'bg-orange-50 text-orange-700 font-semibold'
-                    : 'text-vt-text-secondary hover:bg-gray-50 hover:text-vt-text-primary'
+                    ? 'bg-orange-50 text-orange-700'
+                    : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
                 }`}
               >
                 {item.label}
               </Link>
             );
           })}
-          
-          {/* Home Link in Mobile Menu */}
-          <Link
-            href="/"
-            onClick={() => setIsMobileMenuOpen(false)}
-            className="flex items-center space-x-2 px-4 py-2.5 rounded-lg bg-orange-500 text-white hover:bg-orange-600 transition-colors font-medium text-sm mt-4"
-            title="Back to Home"
-          >
-            <Home className="w-5 h-5" />
-            <span>Back to Home</span>
-          </Link>
         </nav>
       )}
     </header>

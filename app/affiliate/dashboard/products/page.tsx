@@ -1,5 +1,5 @@
 // Affiliate Dashboard - Products & Campaigns Page
-// Browse products and special campaigns to promote
+// Browse products and special campaigns to promote with link generation
 
 'use client';
 
@@ -11,76 +11,101 @@ import DashboardSidebar from '@/components/affiliate/DashboardSidebar';
 import DashboardHeader from '@/components/affiliate/DashboardHeader';
 import ProductsList from '@/components/affiliate/ProductsList';
 import CampaignsList from '@/components/affiliate/CampaignsList';
+import { Package, TrendingUp } from 'lucide-react';
 
 export default function ProductsPage() {
   const router = useRouter();
   const { isAuthenticated, user } = useAppSelector((state) => state.auth);
-  const { products, campaigns, loading } = useAffiliateProducts();
+  const { products, campaigns, loadingProducts, loadingCampaigns } = useAffiliateProducts();
   const [mounted, setMounted] = useState(false);
   const [activeTab, setActiveTab] = useState<'products' | 'campaigns'>('products');
 
-  // useEffect(() => {
-  //   setMounted(true);
-  //   if (mounted && !isAuthenticated) {
-  //     router.push('/login');
-  //   }
-  // }, [isAuthenticated, mounted, router]);
+  useEffect(() => {
+    setMounted(true);
+    if (mounted && !isAuthenticated) {
+      router.push('/login');
+    }
+  }, [isAuthenticated, mounted, router]);
 
-  // if (!mounted || !isAuthenticated) {
-  //   return (
-  //     <div className="flex items-center justify-center min-h-screen">
-  //       <div className="text-vt-text-secondary">Loading...</div>
-  //     </div>
-  //   );
-  // }
+  if (!mounted || !isAuthenticated) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-slate-50">
+        <div className="text-slate-600 font-medium">Loading...</div>
+      </div>
+    );
+  }
+
+  const safeProducts = Array.isArray(products) ? products : [];
+  const safeCampaigns = Array.isArray(campaigns) ? campaigns : [];
 
   return (
-    <div className="flex h-screen bg-vt-bg-secondary">
-      <DashboardSidebar />
+    <div className="min-h-screen bg-slate-50">
+      <DashboardHeader user={user} />
 
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <DashboardHeader user={user} />
+      <div className="flex min-h-[calc(100vh-4rem)] overflow-hidden">
+        <DashboardSidebar />
 
         <main className="flex-1 overflow-y-auto">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="mx-auto flex min-h-full max-w-7xl flex-col px-4 py-6 sm:px-6 lg:px-8">
             {/* Page Header */}
-            <div className="mb-8">
-              <h1 className="text-3xl font-bold text-vt-text-primary">Products & Campaigns</h1>
-              <p className="text-vt-text-secondary mt-2">Browse and promote our products and special campaigns</p>
+            <div className="mb-8 rounded-2xl border border-slate-200 bg-gradient-to-br from-white to-slate-50 p-6 shadow-sm">
+              <div>
+                <div className="flex items-center space-x-3 mb-4">
+                  <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg">
+                    <Package className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold uppercase tracking-widest text-blue-600">Products</p>
+                    <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">Browse & Promote</h1>
+                  </div>
+                </div>
+                <p className="text-slate-600 max-w-3xl">Find products to promote and generate unique affiliate links. Click "Generate Link" on any product to create your unique referral URL.</p>
+              </div>
             </div>
 
             {/* Tabs */}
-            <div className="mb-8 border-b border-vt-border">
-              <div className="flex space-x-8">
+            <div className="mb-8">
+              <div className="flex space-x-1 border-b border-slate-200">
                 <button
                   onClick={() => setActiveTab('products')}
-                  className={`pb-4 px-2 font-medium transition-colors ${
+                  className={`flex items-center space-x-2 px-4 py-3 font-medium border-b-2 transition-all ${
                     activeTab === 'products'
-                      ? 'text-vt-primary border-b-2 border-vt-primary'
-                      : 'text-vt-text-secondary hover:text-vt-text-primary'
+                      ? 'border-orange-600 text-orange-600'
+                      : 'border-transparent text-slate-600 hover:text-slate-900'
                   }`}
                 >
-                  All Products
+                  <Package className="w-4 h-4" />
+                  <span>All Products ({safeProducts.length})</span>
                 </button>
                 <button
                   onClick={() => setActiveTab('campaigns')}
-                  className={`pb-4 px-2 font-medium transition-colors ${
+                  className={`flex items-center space-x-2 px-4 py-3 font-medium border-b-2 transition-all ${
                     activeTab === 'campaigns'
-                      ? 'text-vt-primary border-b-2 border-vt-primary'
-                      : 'text-vt-text-secondary hover:text-vt-text-primary'
+                      ? 'border-orange-600 text-orange-600'
+                      : 'border-transparent text-slate-600 hover:text-slate-900'
                   }`}
                 >
-                  Active Campaigns
+                  <TrendingUp className="w-4 h-4" />
+                  <span>Active Campaigns ({safeCampaigns.length})</span>
                 </button>
               </div>
             </div>
 
+            {/* Info Banner */}
+            <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 p-4">
+              <p className="text-sm text-amber-900">
+                <span className="font-semibold">💡 Pro Tip:</span> Generate unique links for different platforms to track which channels drive the most conversions. Visit your <a href="/affiliate/dashboard/links" className="underline hover:no-underline text-amber-700 font-medium">Links Dashboard</a> to see detailed analytics.
+              </p>
+            </div>
+
             {/* Content */}
-            {activeTab === 'products' ? (
-              <ProductsList products={products} loading={loading} />
-            ) : (
-              <CampaignsList campaigns={campaigns} loading={loading} />
-            )}
+            <div className="animate-fade-in">
+              {activeTab === 'products' ? (
+                <ProductsList products={safeProducts} loading={loadingProducts} />
+              ) : (
+                <CampaignsList campaigns={safeCampaigns} loading={loadingCampaigns} />
+              )}
+            </div>
           </div>
         </main>
       </div>

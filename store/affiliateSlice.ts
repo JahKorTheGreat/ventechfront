@@ -1,17 +1,79 @@
 // Affiliate Redux Slice
 // Manages global state for affiliate dashboard data and UI
+// Includes defensive guards against state corruption
 
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
-import { DashboardStats, ChartDataPoint } from '@/services/affiliateStats.service';
-import { ReferralLink } from '@/services/affiliateLinks.service';
-import { Earning, EarningsSummary } from '@/services/affiliateEarnings.service';
-import { Payout, PaymentMethod } from '@/services/affiliatePayouts.service';
-import { AffiliateProduct, AffiliateCampaign } from '@/services/affiliateProducts.service';
-import affiliateStatsService from '@/services/affiliateStats.service';
-import affiliateLinksService from '@/services/affiliateLinks.service';
-import affiliateEarningsService from '@/services/affiliateEarnings.service';
-import affiliatePayoutsService from '@/services/affiliatePayouts.service';
-import affiliateProductsService from '@/services/affiliateProducts.service';
+import { DashboardStats, ChartDataPoint, ChartResponse, affiliateStatsService } from '@/services/affiliateStats.service';
+import { ReferralLink, affiliateLinksService } from '@/services/affiliateLinks.service';
+import { Earning, EarningsSummary, affiliateEarningsService } from '@/services/affiliateEarnings.service';
+import { Payout, PaymentMethod, affiliatePayoutsService } from '@/services/affiliatePayouts.service';
+import { Referral, affiliateReferralsService } from '@/services/affiliateReferrals.service';
+import { AffiliateProduct, AffiliateCampaign, affiliateProductsService } from '@/services/affiliateProducts.service';
+
+/**
+ * Type Guards and Validators
+ * Prevents state corruption by validating payload formats
+ */
+function isValidLink(obj: any): obj is ReferralLink {
+  const hasUrl = typeof obj.url === 'string' && obj.url.length > 0;
+  const hasGeneratedUrl = typeof obj.generated_url === 'string' && obj.generated_url.length > 0;
+
+  return (
+    obj &&
+    typeof obj === 'object' &&
+    typeof obj.id === 'string' &&
+    (hasUrl || hasGeneratedUrl) &&
+    typeof obj.clicks === 'number' &&
+    typeof obj.conversions === 'number' &&
+    typeof obj.earnings === 'number'
+  );
+}
+
+function isLinkArray(obj: any): obj is ReferralLink[] {
+  return Array.isArray(obj) && obj.every(item => isValidLink(item));
+}
+
+function ensureLinksArray(state: AffiliateState): void {
+  if (!Array.isArray(state.links)) {
+    console.warn('[Redux] Links state corruption detected, resetting to empty array');
+    state.links = [];
+  }
+}
+
+function extractLinksFromPayload(payload: any): ReferralLink[] {
+  // Direct array response
+  if (Array.isArray(payload)) {
+    return payload;
+  }
+  // Wrapped response: { data: [...] }
+  if (payload?.data && Array.isArray(payload.data)) {
+    return payload.data;
+  }
+  // Wrapped response: { links: [...] }
+  if (payload?.links && Array.isArray(payload.links)) {
+    return payload.links;
+  }
+  // Invalid format
+  console.warn('[Redux] Unexpected links payload format:', payload);
+  return [];
+}
+
+function extractSingleLink(payload: any): ReferralLink | null {
+  // Direct link object
+  if (isValidLink(payload)) {
+    return payload;
+  }
+  // Wrapped response: { data: {...} }
+  if (isValidLink(payload?.data)) {
+    return payload.data;
+  }
+  // Wrapped response: { link: {...} }
+  if (isValidLink(payload?.link)) {
+    return payload.link;
+  }
+  console.warn('[Redux] Unexpected single link payload format:', payload);
+  return null;
+}
 
 // Async Thunks for API calls
 export const fetchDashboardStats = createAsyncThunk(
@@ -72,9 +134,9 @@ export const deleteLink = createAsyncThunk(
 
 export const fetchEarnings = createAsyncThunk(
   'affiliate/fetchEarnings',
-  async (filters: { status?: "pending" | "approved" | "rejected" | "paid" | "all"; page?: number; limit?: number } = {}, { rejectWithValue }) => {
+  async (_, { rejectWithValue }) => {
     try {
-      return await affiliateEarningsService.getEarnings(filters);
+      return await affiliateEarningsService.getEarnings();
     } catch (error: any) {
       return rejectWithValue(error.message || 'Failed to fetch earnings');
     }
@@ -96,11 +158,8 @@ export const fetchPayments = createAsyncThunk(
   'affiliate/fetchPayments',
   async (_, { rejectWithValue }) => {
     try {
-      const [payouts, methods] = await Promise.all([
-        affiliatePayoutsService.getPayouts(),
-        affiliatePayoutsService.getPaymentMethods(),
-      ]);
-      return { payouts, methods };
+      const payouts = await affiliatePayoutsService.getPayouts();
+      return { payouts: payouts.payouts, methods: [] };
     } catch (error: any) {
       return rejectWithValue(error.message || 'Failed to fetch payments');
     }
@@ -129,18 +188,43 @@ export const fetchCampaigns = createAsyncThunk(
   }
 );
 
+export const fetchReferrals = createAsyncThunk(
+  'affiliate/fetchReferrals',
+  async (_, { rejectWithValue }) => {
+    try {
+      return await affiliateReferralsService.getReferrals();
+    } catch (error: any) {
+      return rejectWithValue(error.message || 'Failed to fetch referrals');
+    }
+  }
+);
+
 // State interface
-interface AffiliateState {
+interface AffiliateLoadingState {
+  stats: boolean;
+  chartData: boolean;
+  links: boolean;
+  earnings: boolean;
+  referrals: boolean;
+  payouts: boolean;
+  products: boolean;
+  campaigns: boolean;
+}
+
+export interface AffiliateState {
   // Dashboard
   stats: DashboardStats | null;
-  chartData: ChartDataPoint[] | null;
+  chartData: ChartResponse | null;
   
-  // Links
+  // Links - MUST ALWAYS BE AN ARRAY
   links: ReferralLink[];
   
   // Earnings
   earnings: Earning[];
   earningsSummary: EarningsSummary | null;
+  
+  // Referrals
+  referrals: Referral[];
   
   // Payouts
   payouts: Payout[];
@@ -151,15 +235,7 @@ interface AffiliateState {
   campaigns: AffiliateCampaign[];
   
   // UI States
-  loading: {
-    stats: boolean;
-    chartData: boolean;
-    links: boolean;
-    earnings: boolean;
-    payouts: boolean;
-    products: boolean;
-    campaigns: boolean;
-  };
+  loading: AffiliateLoadingState;
   
   error: string | null;
   selectedTimeframe: 'week' | 'month' | 'year';
@@ -171,6 +247,7 @@ const initialState: AffiliateState = {
   links: [],
   earnings: [],
   earningsSummary: null,
+  referrals: [],
   payouts: [],
   paymentMethods: [],
   products: [],
@@ -180,6 +257,7 @@ const initialState: AffiliateState = {
     chartData: false,
     links: false,
     earnings: false,
+    referrals: false,
     payouts: false,
     products: false,
     campaigns: false,
@@ -234,12 +312,14 @@ const affiliateSlice = createSlice({
     // Fetch Links
     builder
       .addCase(fetchLinks.pending, (state) => {
+        ensureLinksArray(state);
         state.loading.links = true;
         state.error = null;
       })
       .addCase(fetchLinks.fulfilled, (state, action) => {
         state.loading.links = false;
-        state.links = action.payload;
+        const links = extractLinksFromPayload(action.payload);
+        state.links = isLinkArray(links) ? links : [];
       })
       .addCase(fetchLinks.rejected, (state, action) => {
         state.loading.links = false;
@@ -249,10 +329,19 @@ const affiliateSlice = createSlice({
     // Create Link
     builder
       .addCase(createLink.pending, (state) => {
+        ensureLinksArray(state);
         state.error = null;
       })
       .addCase(createLink.fulfilled, (state, action) => {
-        state.links.push(action.payload);
+        ensureLinksArray(state);
+        const newLink = extractSingleLink(action.payload);
+        if (newLink && isValidLink(newLink)) {
+          // Add to beginning for better UX (newly created items appear first)
+          state.links.unshift(newLink);
+        } else {
+          console.error('[Redux] Invalid link object received from createLink:', action.payload);
+          state.error = 'Failed to create link: Invalid response format';
+        }
       })
       .addCase(createLink.rejected, (state, action) => {
         state.error = action.payload as string;
@@ -260,8 +349,16 @@ const affiliateSlice = createSlice({
 
     // Delete Link
     builder
+      .addCase(deleteLink.pending, (state) => {
+        ensureLinksArray(state);
+        state.error = null;
+      })
       .addCase(deleteLink.fulfilled, (state, action) => {
-        state.links = state.links.filter((link) => link.id !== action.payload);
+        ensureLinksArray(state);
+        const linkIdToDelete = action.payload;
+        if (typeof linkIdToDelete === 'string') {
+          state.links = state.links.filter((link) => link.id !== linkIdToDelete);
+        }
       })
       .addCase(deleteLink.rejected, (state, action) => {
         state.error = action.payload as string;
@@ -275,7 +372,13 @@ const affiliateSlice = createSlice({
       })
       .addCase(fetchEarnings.fulfilled, (state, action) => {
         state.loading.earnings = false;
-        state.earnings = action.payload.earnings;
+        const payload = action.payload as any;
+        // Handle both array and wrapped responses
+        state.earnings = Array.isArray(payload?.earnings) 
+          ? payload.earnings 
+          : Array.isArray(payload) 
+            ? payload 
+            : [];
       })
       .addCase(fetchEarnings.rejected, (state, action) => {
         state.loading.earnings = false;
@@ -287,23 +390,22 @@ const affiliateSlice = createSlice({
       state.earningsSummary = action.payload;
     });
 
-    // Fetch Payments
+    // Fetch Referrals
     builder
-      .addCase(fetchPayments.pending, (state) => {
-        state.loading.payouts = true;
+      .addCase(fetchReferrals.pending, (state) => {
+        state.loading.referrals = true;
         state.error = null;
       })
-      .addCase(fetchPayments.fulfilled, (state, action) => {
-        state.loading.payouts = false;
-        state.payouts = action.payload.payouts;
-        state.paymentMethods = action.payload.methods;
+      .addCase(fetchReferrals.fulfilled, (state, action) => {
+        state.loading.referrals = false;
+        state.referrals = action.payload.referrals || [];
       })
-      .addCase(fetchPayments.rejected, (state, action) => {
-        state.loading.payouts = false;
+      .addCase(fetchReferrals.rejected, (state, action) => {
+        state.loading.referrals = false;
         state.error = action.payload as string;
       });
 
-    // Fetch Products
+    // Fetch Campaigns
     builder
       .addCase(fetchProducts.pending, (state) => {
         state.loading.products = true;
@@ -311,7 +413,16 @@ const affiliateSlice = createSlice({
       })
       .addCase(fetchProducts.fulfilled, (state, action) => {
         state.loading.products = false;
-        state.products = action.payload.products;
+        const payload = action.payload as any;
+        // Handle multiple response formats for robustness
+        const productList = Array.isArray(payload?.products)
+          ? payload.products
+          : Array.isArray(payload?.data)
+            ? payload.data
+            : Array.isArray(payload)
+              ? payload
+              : [];
+        state.products = productList;
       })
       .addCase(fetchProducts.rejected, (state, action) => {
         state.loading.products = false;
