@@ -1,7 +1,7 @@
 'use client';
 
 import { usePathname, useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useAppSelector } from '@/store';
 import {
   LayoutDashboard,
@@ -29,6 +29,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { signOut } from '@/services/auth.service';
+import { notificationService, Notification } from '@/services/notification.service';
 import { supabase } from '@/lib/supabase';
 import toast from 'react-hot-toast';
 
@@ -49,11 +50,61 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [mounted, setMounted] = useState(false);
   const [pendingOrdersCount, setPendingOrdersCount] = useState<number | undefined>(undefined);
   const [unreadNotificationsCount, setUnreadNotificationsCount] = useState<number | undefined>(undefined);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [dropdownLoading, setDropdownLoading] = useState(false);
+  const [dropdownError, setDropdownError] = useState<string | null>(null);
+  const dropdownRef = useRef<HTMLDivElement | null>(null);
+  const bellButtonRef = useRef<HTMLButtonElement | null>(null);
 
   useEffect(() => {
     // Mark as mounted to prevent hydration mismatch
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        dropdownOpen &&
+        dropdownRef.current &&
+        bellButtonRef.current &&
+        !dropdownRef.current.contains(event.target as Node) &&
+        !bellButtonRef.current.contains(event.target as Node)
+      ) {
+        setDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [dropdownOpen]);
+
+  const fetchNotifications = async () => {
+    try {
+      setDropdownLoading(true);
+      setDropdownError(null);
+      const data = await notificationService.getAllNotifications(6);
+      setNotifications(data);
+    } catch (error) {
+      setDropdownError('Unable to load notifications');
+      console.error('Error loading notifications:', error);
+    } finally {
+      setDropdownLoading(false);
+    }
+  };
+
+  const toggleNotifications = async () => {
+    setDropdownOpen((prev) => !prev);
+    if (!dropdownOpen) {
+      await fetchNotifications();
+    }
+  };
+
+  const markAllDropdownAsRead = async () => {
+    await notificationService.markAllAsRead();
+    setNotifications((prev) => prev.map((notification) => ({ ...notification, is_read: true })));
+    setUnreadNotificationsCount(0);
+  };
 
   // Fetch badge counts
   useEffect(() => {
@@ -72,34 +123,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         }
 
         // Fetch unread notifications count
-        // Handle gracefully if notifications table doesn't exist
-        try {
-          const { count: unreadCount, error: notificationsError } = await supabase
-            .from('notifications')
-            .select('*', { count: 'exact', head: true })
-            .eq('is_read', false);
-
-          if (!notificationsError) {
-            setUnreadNotificationsCount(unreadCount || 0);
-          } else {
-            // If table doesn't exist, set to 0 and don't show badge
-            const errorCode = notificationsError.code || '';
-            const errorMessage = notificationsError.message || '';
-            
-            if (
-              errorCode === '42P01' || // Table doesn't exist
-              errorCode === 'PGRST116' ||
-              errorMessage.includes('does not exist') ||
-              errorMessage.includes('relation') ||
-              errorMessage.includes('not found')
-            ) {
-              setUnreadNotificationsCount(0); // Set to 0 so badge doesn't show
-            }
-          }
-        } catch (err) {
-          // Table doesn't exist or other error - set to 0
-          setUnreadNotificationsCount(0);
-        }
+        const unread = await notificationService.getUnreadCount();
+        setUnreadNotificationsCount(unread);
       } catch (error) {
         console.error('Error fetching badge counts:', error);
       }
@@ -455,11 +480,88 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 Welcome back, {user?.full_name?.split(' ')[0] || 'Admin'}
               </p>
             </div>
-            <div className="flex items-center gap-4">
-              <button className="relative p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                <Bell size={20} />
-                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-              </button>
+            <div className="flex items-center gap-4 relative">
+              <div className="relative">
+                <button
+                  ref={bellButtonRef}
+                  onClick={toggleNotifications}
+                  className="relative p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                  aria-label="Open notifications"
+                >
+                  <Bell size={20} />
+                  {unreadNotificationsCount && unreadNotificationsCount > 0 ? (
+                    <span className="absolute -top-1 -right-1 min-w-[1rem] h-5 px-1.5 rounded-full bg-red-500 text-white text-[10px] font-semibold flex items-center justify-center">
+                      {unreadNotificationsCount > 9 ? '9+' : unreadNotificationsCount}
+                    </span>
+                  ) : null}
+                </button>
+
+                {dropdownOpen && (
+                  <div
+                    ref={dropdownRef}
+                    className="absolute right-0 mt-2 w-[24rem] max-w-[95vw] bg-white border border-gray-200 rounded-2xl shadow-xl overflow-hidden z-50"
+                  >
+                    <div className="flex items-center justify-between px-4 py-3 bg-gray-50 border-b border-gray-200">
+                      <div>
+                        <p className="text-sm font-semibold text-gray-900">Notifications</p>
+                        <p className="text-xs text-gray-500">
+                          {(unreadNotificationsCount ?? 0) > 0
+                            ? `${unreadNotificationsCount} unread notification${unreadNotificationsCount && unreadNotificationsCount > 1 ? 's' : ''}`
+                            : 'No unread notifications'}
+                        </p>
+                      </div>
+                      <button
+                        onClick={markAllDropdownAsRead}
+                        className="text-xs text-blue-600 hover:underline"
+                        type="button"
+                      >
+                        Mark all read
+                      </button>
+                    </div>
+
+                    <div className="max-h-72 overflow-y-auto">
+                      {dropdownLoading ? (
+                        <div className="p-4 text-center text-sm text-gray-500">Loading notifications...</div>
+                      ) : dropdownError ? (
+                        <div className="p-4 text-center text-sm text-red-600">
+                          {dropdownError}
+                        </div>
+                      ) : notifications.length === 0 ? (
+                        <div className="p-6 text-center text-sm text-gray-500">No notifications at the moment.</div>
+                      ) : (
+                        <ul className="divide-y divide-gray-200">
+                          {notifications.map((notification) => (
+                            <li key={notification.id} className="px-4 py-3 hover:bg-gray-50 transition-colors">
+                              <div className="flex items-start gap-3">
+                                <span className={`mt-1 inline-flex h-2.5 w-2.5 rounded-full ${notification.is_read ? 'bg-transparent' : 'bg-orange-500'}`}></span>
+                                <div className="min-w-0 flex-1">
+                                  <p className="text-sm font-semibold text-gray-900 truncate">{notification.title}</p>
+                                  <p className="text-sm text-gray-500 mt-1">{notification.message}</p>
+                                  <p className="text-xs text-gray-400 mt-2">{new Date(notification.created_at).toLocaleString()}</p>
+                                </div>
+                              </div>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+
+                    <div className="flex items-center justify-between px-4 py-3 bg-gray-50 border-t border-gray-200">
+                      <Link href="/admin/notifications" className="text-sm font-medium text-[#FF7A19] hover:underline">
+                        View all
+                      </Link>
+                      <button
+                        onClick={() => setDropdownOpen(false)}
+                        className="text-sm text-gray-600 hover:text-gray-900"
+                        type="button"
+                      >
+                        Close
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
               <Link
                 href="/"
                 className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium transition-colors"
