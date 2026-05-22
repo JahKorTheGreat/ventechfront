@@ -1,9 +1,7 @@
-'use server';
-
 import { notFound } from 'next/navigation';
 import DashboardHeader from '@/components/affiliate/DashboardHeader';
 
-export default function HeaderDebugPage() {
+export default async function HeaderDebugPage() {
   // Protect this debug-only page in non-development environments
   if (process.env.NODE_ENV !== 'development') {
     notFound();
