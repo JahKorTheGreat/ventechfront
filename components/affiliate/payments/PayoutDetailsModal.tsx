@@ -1,7 +1,7 @@
 'use client';
 
 import { X, Copy, Check } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface PayoutDetailsModalProps {
   payout?: {
@@ -9,7 +9,7 @@ interface PayoutDetailsModalProps {
     amount: number;
     status: 'pending' | 'processing' | 'completed' | 'failed';
     paymentMethod: string;
-    paymentType: 'BANK' | 'MOBILE' | 'CRYPTO';
+    paymentType: 'BANK' | 'MOBILE' | 'CRYPTO' | 'PAYPAL';
     createdAt: string;
     updatedAt: string;
     paystackReference?: string;
@@ -25,8 +25,6 @@ export default function PayoutDetailsModal({
   onClose 
 }: PayoutDetailsModalProps) {
   const [copied, setCopied] = useState(false);
-
-  if (!isOpen || !payout) return null;
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -58,6 +56,7 @@ export default function PayoutDetailsModal({
     switch (type) {
       case 'BANK': return '🏦';
       case 'MOBILE': return '📱';
+      case 'PAYPAL': return '💲';
       case 'CRYPTO': return '₿';
       default: return '💳';
     }
@@ -71,9 +70,18 @@ export default function PayoutDetailsModal({
     };
   };
 
-  const createdDate = formatDate(payout.createdAt);
-  const updatedDate = formatDate(payout.updatedAt);
-  const daysSince = Math.floor((Date.now() - new Date(payout.createdAt).getTime()) / (1000 * 60 * 60 * 24));
+  const [daysSince, setDaysSince] = useState<number>(0);
+
+  useEffect(() => {
+    if (!payout) return;
+    const ds = Math.floor((Date.now() - new Date(payout.createdAt).getTime()) / (1000 * 60 * 60 * 24));
+    setDaysSince(ds);
+  }, [payout]);
+
+  const createdDate = payout ? formatDate(payout.createdAt) : { date: '', time: '' };
+  const updatedDate = payout ? formatDate(payout.updatedAt) : { date: '', time: '' };
+
+  if (!isOpen || !payout) return null;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">

@@ -35,9 +35,33 @@ export default function PayoutsPage() {
   const [payoutSummary, setPayoutSummary] = useState<PayoutSummary | null>(null);
   const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'processing' | 'completed' | 'failed'>('all');
 
-  const normalizedPaymentMethods = ((paymentMethods || []) as any[]).map((method: any) => ({
+  interface BackendPaymentMethod {
+    id: string;
+    type: 'bank_transfer' | 'mobile_money' | 'paypal' | string;
+    details: string;
+    isDefault: boolean;
+    createdAt: string;
+    name: string;
+  }
+
+  interface NormalizedPaymentMethod {
+    id: string;
+    type: 'BANK' | 'MOBILE' | 'PAYPAL' | 'CRYPTO';
+    details: string;
+    is_default: boolean;
+    created_at: string;
+    name: string;
+  }
+
+  const normalizedPaymentMethods: NormalizedPaymentMethod[] = ((paymentMethods || []) as BackendPaymentMethod[]).map((method) => ({
     id: method.id,
-    type: method.type === 'bank_transfer' ? 'BANK' : method.type === 'mobile_money' ? 'MOBILE' : 'CRYPTO',
+    type: method.type === 'bank_transfer'
+      ? 'BANK'
+      : method.type === 'mobile_money'
+      ? 'MOBILE'
+      : method.type === 'paypal'
+      ? 'PAYPAL'
+      : 'CRYPTO',
     details: method.details,
     is_default: method.isDefault,
     created_at: method.createdAt,
@@ -127,13 +151,19 @@ export default function PayoutsPage() {
                       } else if (data.type === 'MOBILE') {
                         name = `Mobile Money (${data.details.phoneNumber})`;
                         details = data.details.phoneNumber || '';
-                      } else if (data.type === 'CRYPTO') {
-                        name = `Crypto Wallet (${data.details.walletAddress?.substring(0, 10)}...)`;
-                        details = data.details.walletAddress || '';
+                      } else if (data.type === 'PAYPAL') {
+                        const paypalEmail = data.details.paypalEmail || '';
+                        name = `PayPal (${paypalEmail})`;
+                        details = paypalEmail;
                       }
 
                       const methodData: PaymentMethodInput = {
-                        type: data.type === 'BANK' ? 'bank_transfer' : data.type === 'MOBILE' ? 'mobile_money' : 'crypto_usdt',
+                        type:
+                          data.type === 'BANK'
+                            ? 'bank_transfer'
+                            : data.type === 'MOBILE'
+                            ? 'mobile_money'
+                            : 'paypal',
                         name,
                         details,
                       };

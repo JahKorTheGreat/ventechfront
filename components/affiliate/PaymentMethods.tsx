@@ -72,8 +72,8 @@ export default function PaymentMethods({
         return 'Bank Transfer';
       case 'mobile_money':
         return 'Mobile Money';
-      case 'crypto_usdt':
-        return 'Crypto (USDT)';
+      case 'paypal':
+        return 'PayPal';
       default:
         return type;
     }
@@ -112,7 +112,7 @@ export default function PaymentMethods({
               >
                 <option value="bank_transfer">Bank Transfer</option>
                 <option value="mobile_money">Mobile Money (MoMo)</option>
-                <option value="crypto_usdt">Crypto (USDT)</option>
+                <option value="paypal">PayPal</option>
               </select>
             </div>
 
@@ -131,11 +131,11 @@ export default function PaymentMethods({
               <label className="block text-sm font-medium text-vt-text-primary mb-2">
                 {formData.type === 'bank_transfer' && 'Account Number / IBAN'}
                 {formData.type === 'mobile_money' && 'Phone Number'}
-                {formData.type === 'crypto_usdt' && 'Wallet Address'}
+                {formData.type === 'paypal' && 'PayPal Email'}
               </label>
               <input
-                type="text"
-                placeholder="Enter details"
+                type={formData.type === 'paypal' ? 'email' : 'text'}
+                placeholder={formData.type === 'paypal' ? 'Enter PayPal email' : 'Enter details'}
                 value={formData.details}
                 onChange={(e) => setFormData({ ...formData, details: e.target.value })}
                 className="w-full px-4 py-2 border border-vt-border-subtle rounded-lg bg-gray-50 text-vt-text-primary outline-none focus:border-vt-primary transition-colors"

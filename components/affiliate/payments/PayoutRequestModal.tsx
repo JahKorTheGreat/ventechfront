@@ -3,11 +3,20 @@
 import { useState } from 'react';
 import { X } from 'lucide-react';
 
+type AffiliatedPaymentMethodType = 'BANK' | 'MOBILE' | 'PAYPAL' | 'CRYPTO';
+
+interface AffiliatePaymentMethod {
+  id: string;
+  type: AffiliatedPaymentMethodType;
+  details: string;
+  is_default: boolean;
+}
+
 interface PayoutRequestModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (data: { amount: number; paymentMethodId: string }) => Promise<void>;
-  paymentMethods: Array<{ id: string; type: string; details: string; is_default: boolean }>;
+  paymentMethods: AffiliatePaymentMethod[];
   availableBalance?: number;
   minimumPayout?: number;
   loading?: boolean;
@@ -28,8 +37,6 @@ export default function PayoutRequestModal({
   );
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
-
-  const defaultMethod = paymentMethods.find(m => m.is_default);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -69,26 +76,28 @@ export default function PayoutRequestModal({
         setSuccess(false);
         onClose();
       }, 2000);
-    } catch (err: any) {
-      setError(err.message || 'Failed to request payout');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setError(msg || 'Failed to request payout');
     }
   };
 
   if (!isOpen) return null;
 
-  const formatMethodDisplay = (method: any) => {
+  const formatMethodDisplay = (method: AffiliatePaymentMethod) => {
     const typeIcon = {
       BANK: '🏦',
       MOBILE: '📱',
+      PAYPAL: '💲',
       CRYPTO: '₿',
-    }[method.type as 'BANK' | 'MOBILE' | 'CRYPTO'] || '💳';
-    
+    }[method.type] || '💳';
+
     let details = method.details;
     if (method.type === 'BANK') {
       const parts = details.split(':');
       details = `${parts[1]?.slice(-4) || '****'} (${parts[0] || 'Bank'})`;
     }
-    
+
     return `${typeIcon} ${method.type} - ${details}`;
   };
 

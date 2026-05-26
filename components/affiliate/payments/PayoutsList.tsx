@@ -8,7 +8,7 @@ interface Payout {
   amount: number;
   status: 'pending' | 'processing' | 'completed' | 'failed';
   paymentMethod: string;
-  paymentType: 'BANK' | 'MOBILE' | 'CRYPTO';
+  paymentType: 'BANK' | 'MOBILE' | 'CRYPTO' | 'PAYPAL';
   createdAt: string;
   updatedAt: string;
   paystackReference?: string;
@@ -55,6 +55,7 @@ export default function PayoutsList({
     switch (type) {
       case 'BANK': return '🏦';
       case 'MOBILE': return '📱';
+      case 'PAYPAL': return '💲';
       case 'CRYPTO': return '₿';
       default: return '💳';
     }
@@ -66,8 +67,9 @@ export default function PayoutsList({
       setRetrying(id);
       setError('');
       await onRetry(id);
-    } catch (err: any) {
-      setError(err.message || 'Failed to retry payout');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setError(msg || 'Failed to retry payout');
     } finally {
       setRetrying(null);
     }
@@ -79,8 +81,9 @@ export default function PayoutsList({
       setVerifying(id);
       setError('');
       await onVerify(id);
-    } catch (err: any) {
-      setError(err.message || 'Failed to verify payout');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setError(msg || 'Failed to verify payout');
     } finally {
       setVerifying(null);
     }
@@ -92,8 +95,9 @@ export default function PayoutsList({
       setCancelling(id);
       setError('');
       await onCancel(id);
-    } catch (err: any) {
-      setError(err.message || 'Failed to cancel payout');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setError(msg || 'Failed to cancel payout');
     } finally {
       setCancelling(null);
     }

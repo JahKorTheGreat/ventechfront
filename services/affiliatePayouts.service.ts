@@ -7,7 +7,7 @@ import { apiRequest, validators } from '@/lib/affiliateApiClient';
 const API_BASE = '/payouts';
 const PAYMENT_METHODS_BASE = '/payment-methods';
 
-export type PaymentMethodType = 'bank_transfer' | 'mobile_money' | 'crypto_usdt';
+export type PaymentMethodType = 'bank_transfer' | 'mobile_money' | 'paypal';
 
 export interface PaymentMethod {
   id: string;
@@ -147,7 +147,7 @@ export const affiliatePayoutsService = {
   async addPaymentMethod(data: PaymentMethodInput): Promise<PaymentMethod> {
     // Input validation
     const validationErrors = validators.validateObject(data, {
-      type: (value) => validators.required(value, 'type') || validators.oneOf(value, 'type', ['bank_transfer', 'mobile_money', 'crypto_usdt']),
+      type: (value) => validators.required(value, 'type') || validators.oneOf(value, 'type', ['bank_transfer', 'mobile_money', 'paypal']),
       name: (value) => validators.required(value, 'name') || validators.string(value, 'name', 1, 100),
       details: (value) => validators.required(value, 'details') || validators.string(value, 'details', 1, 500),
     });
@@ -176,7 +176,7 @@ export const affiliatePayoutsService = {
     // Input validation
     const validationErrors = validators.validateObject({ methodId, ...data }, {
       methodId: (value) => validators.required(value, 'methodId') || validators.string(value, 'methodId', 1, 50),
-      type: (value) => value ? validators.oneOf(value, 'type', ['bank_transfer', 'mobile_money', 'crypto_usdt']) : null,
+      type: (value) => value ? validators.oneOf(value, 'type', ['bank_transfer', 'mobile_money', 'paypal']) : null,
       name: (value) => value ? validators.string(value, 'name', 1, 100) : null,
       details: (value) => value ? validators.string(value, 'details', 1, 500) : null,
     });

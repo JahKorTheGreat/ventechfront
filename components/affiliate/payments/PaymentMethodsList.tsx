@@ -5,7 +5,7 @@ import { useState } from 'react';
 
 interface PaymentMethod {
   id: string;
-  type: 'BANK' | 'MOBILE' | 'CRYPTO';
+  type: 'BANK' | 'MOBILE' | 'CRYPTO' | 'PAYPAL';
   details: string;
   is_default: boolean;
   created_at: string;
@@ -31,6 +31,7 @@ export default function PaymentMethodsList({
     switch (type) {
       case 'BANK': return '🏦';
       case 'MOBILE': return '📱';
+      case 'PAYPAL': return '💲';
       case 'CRYPTO': return '₿';
       default: return '💳';
     }
@@ -103,7 +104,7 @@ export default function PaymentMethodsList({
         <div className="text-center py-8">
           <div className="text-4xl mb-3">💳</div>
           <p className="text-gray-600">No payment methods added yet</p>
-          <p className="text-gray-500 text-sm mt-1">Add a bank account, mobile money, or crypto wallet to get started</p>
+          <p className="text-gray-500 text-sm mt-1">Add a bank account, mobile money, PayPal, or crypto wallet to get started</p>
         </div>
       ) : (
         <div className="space-y-3">

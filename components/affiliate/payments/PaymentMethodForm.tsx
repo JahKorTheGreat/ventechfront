@@ -5,21 +5,21 @@ import { ChevronDown } from 'lucide-react';
 
 interface PaymentMethodFormProps {
   onSubmit: (data: {
-    type: 'BANK' | 'MOBILE' | 'CRYPTO';
+    type: 'BANK' | 'MOBILE' | 'PAYPAL';
     details: Record<string, string>;
   }) => Promise<void>;
   loading?: boolean;
 }
 
 export default function PaymentMethodForm({ onSubmit, loading = false }: PaymentMethodFormProps) {
-  const [type, setType] = useState<'BANK' | 'MOBILE' | 'CRYPTO'>('BANK');
+  const [type, setType] = useState<'BANK' | 'MOBILE' | 'PAYPAL'>('BANK');
   const [isOpen, setIsOpen] = useState(false);
   const [formData, setFormData] = useState({
     bankCode: '',
     accountNumber: '',
     accountName: '',
     phoneNumber: '',
-    walletAddress: '',
+    paypalEmail: '',
   });
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
@@ -31,7 +31,7 @@ export default function PaymentMethodForm({ onSubmit, loading = false }: Payment
     { code: 'ZENITH', name: 'Zenith Bank' },
   ];
 
-  const handleMethodChange = (newType: 'BANK' | 'MOBILE' | 'CRYPTO') => {
+  const handleMethodChange = (newType: 'BANK' | 'MOBILE' | 'PAYPAL') => {
     setType(newType);
     setError('');
   };
@@ -61,9 +61,13 @@ export default function PaymentMethodForm({ onSubmit, loading = false }: Payment
         setError('Invalid Ghana phone number');
         return false;
       }
-    } else if (type === 'CRYPTO') {
-      if (!formData.walletAddress) {
-        setError('Please enter a wallet address');
+    } else if (type === 'PAYPAL') {
+      if (!formData.paypalEmail) {
+        setError('Please enter your PayPal email');
+        return false;
+      }
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.paypalEmail)) {
+        setError('Please enter a valid PayPal email address');
         return false;
       }
     }
@@ -88,23 +92,24 @@ export default function PaymentMethodForm({ onSubmit, loading = false }: Payment
         };
       } else if (type === 'MOBILE') {
         details = { phoneNumber: formData.phoneNumber };
-      } else if (type === 'CRYPTO') {
-        details = { walletAddress: formData.walletAddress };
+      } else if (type === 'PAYPAL') {
+        details = { paypalEmail: formData.paypalEmail };
       }
 
-      await onSubmit({ type, details });
+        await onSubmit({ type, details });
       setSuccess(true);
       setFormData({
         bankCode: '',
         accountNumber: '',
         accountName: '',
         phoneNumber: '',
-        walletAddress: '',
+        paypalEmail: '',
       });
       setType('BANK');
       setTimeout(() => setSuccess(false), 3000);
-    } catch (err: any) {
-      setError(err.message || 'Failed to add payment method');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setError(msg || 'Failed to add payment method');
     }
   };
 
@@ -114,7 +119,7 @@ export default function PaymentMethodForm({ onSubmit, loading = false }: Payment
 
       {/* Payment Type Selector */}
       <div className="grid grid-cols-3 gap-3 mb-6">
-        {(['BANK', 'MOBILE', 'CRYPTO'] as const).map((method) => (
+        {(['BANK', 'MOBILE', 'PAYPAL'] as const).map((method) => (
           <button
             key={method}
             onClick={() => handleMethodChange(method)}
@@ -126,7 +131,7 @@ export default function PaymentMethodForm({ onSubmit, loading = false }: Payment
           >
             {method === 'BANK' && '🏦 Bank'}
             {method === 'MOBILE' && '📱 Mobile'}
-            {method === 'CRYPTO' && '₿ Crypto'}
+            {method === 'PAYPAL' && '💲 PayPal'}
           </button>
         ))}
       </div>
@@ -209,16 +214,16 @@ export default function PaymentMethodForm({ onSubmit, loading = false }: Payment
           </div>
         )}
 
-        {/* Crypto Details */}
-        {type === 'CRYPTO' && (
+        {/* PayPal Details */}
+        {type === 'PAYPAL' && (
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Wallet Address</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">PayPal Email</label>
             <input
-              type="text"
-              name="walletAddress"
-              value={formData.walletAddress}
+              type="email"
+              name="paypalEmail"
+              value={formData.paypalEmail}
               onChange={handleInputChange}
-              placeholder="Enter your wallet address"
+              placeholder="Enter your PayPal email"
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-chart-earnings focus:border-transparent"
             />
           </div>
